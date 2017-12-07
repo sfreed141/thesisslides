@@ -12,21 +12,29 @@
 \usepackage{xspace}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 
-\title{Metropolis}
-\subtitle{A modern beamer theme}
+\title{Real-Time Global Illumination using Voxelization}
+% \subtitle{}
 % \date{\today}
 \date{}
-\author{Matthias Vogelgesang}
-\institute{Center for modern beamer themes}
+\author{Sam Freed\\Advisor: Dr.\ Christian Eckhardt}
+\institute{Cal Poly SLO}
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}
+
+\AtBeginSection[]
+{
+	\begin{frame}
+    	\frametitle{Outline}
+        \tableofcontents[currentsection]
+	\end{frame}
+}
 
 \begin{document}
 
-\maketitle
+\frame{\titlepage}
 
-\begin{frame}{Table of contents}
+\begin{frame}{Outline}
   \setbeamertemplate{section in toc}[sections numbered]
-  \tableofcontents[hideallsubsections]
+  \tableofcontents[]
 \end{frame}
 
 \section{Introduction}
