@@ -240,11 +240,32 @@
 
 \begin{frame}{Spatial Data Structures}
   % quickly go through one slide each (with picture)
+  \begin{description}
+    \item<1>[Uniform Texture] each cell is the same size  % simple, hw filtering; wasteful
+    \item<2>[Cascaded Texture/Clipmap] nested textures with varying cell sizes % there is difference but not important for us; cell sizes are discrete multiplies, still wasteful but better, need to handle edges properly
+    \item<3>[Octree] adaptive tree structure which holds values in leaves % sparse, difficult on gpu to build and traverse, no hw filtering
+  \end{description}
 
   \begin{figure}
     % TODO TODO TODO \includegraphics<+>[width=\textwidth]{}
-    \includegraphics<+>[width=\textwidth]{geometry_clipmap.jpg}
-    \includegraphics<+>[width=\textwidth]{octree.png}
+    \only<1>{\begin{tikzpicture}[scale=0.8]
+      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
+    \end{tikzpicture}}
+    % \includegraphics<+>[width=\textwidth]{geometry_clipmap.jpg}
+    \only<2>{\begin{tikzpicture}[scale=0.8]
+      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
+      \draw [black, step=0.5] (-2, -2) grid ++(4, 4);
+      \draw [black, step=0.25] (-1, -1) grid ++(2, 2);
+    \end{tikzpicture}}
+    % \includegraphics<3>[width=\textwidth]{octree.png}
+    \only<3>{\begin{tikzpicture}[scale=0.8]
+      \draw [black, step=4.0] (-4, -4) grid ++(8, 8);
+      \draw [black, step=2.0] (0, 0) grid ++(4, 4);
+      \draw [black, step=1.0] (2, 2) grid ++(2, 2);
+      \draw [black, step=1.0] (2, 0) grid ++(2, 2);
+      \draw [black, step=0.5] (2, 1) grid ++(1, 2);
+      \draw [black, step=0.25] (2, 1.5) grid ++(1, 1);
+    \end{tikzpicture}}
   \end{figure}
 \end{frame}
 
@@ -310,12 +331,46 @@
   \end{figure}
 \end{frame}
 
+% TODO quick recap here?
+
+\begin{frame}{What am I doing?}
+  \begin{enumerate}
+    \item Compare two approaches for scene voxelization % voxelization is a core part of the algorithm; tessellated version also not restricted to rasterizer
+    \item What if voxel sizes were allowed to be continuous? % voxel warping
+  \end{enumerate}
+\end{frame}
 
 \section{Implementation}
 
 \begin{frame}{Overview of Renderer}
   % flowchart or something showing each render pass
   % list of all major resources (3ish voxel textures, shadowmap, meshes, materials)
+
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Main Steps}
+        \begin{enumerate}
+          \item Setup (load scene, create textures, compile shaders)
+          \item Create Shadowmap
+          \item Voxelize Scene
+          \item Inject Radiance
+          \item Filter Radiance
+          \item Depth Prepass
+          \item Shading
+        \end{enumerate}
+      \end{block}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Important Data}
+        \begin{enumerate}
+          \item Scene (meshes, materials, lights)
+          \item Camera (position, direction) %, projection + view matrices)
+          \item Shadowmap % Framebuffer Object and Texture
+          \item Voxel Textures (color + opacity, normals, radiance)
+        \end{enumerate}
+      \end{block}
+    \end{column}
+  \end{columns}
 \end{frame}
 
 \subsection{Voxelization}
@@ -380,6 +435,7 @@
     \includegraphics<+>[width=\textwidth]{mipmap1.png}
     \includegraphics<+>[width=\textwidth]{mipmap2.png}
     \includegraphics<+>[width=\textwidth]{mipmap3.png}
+    \caption*{\only<1>{Mipmap level 0}\only<2>{Mipmap level 1}\only<3>{Mipmap level 2}\only<4>{\\Mipmap level 3}}
   \end{figure}
 \end{frame}
 
