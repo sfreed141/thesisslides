@@ -15,6 +15,7 @@
 \usepackage{multimedia}
 \usepackage{hyperref}
 \usepackage{subcaption}
+\usepackage{tikz}
 
 \graphicspath{ {figures/} }
 
@@ -43,6 +44,7 @@
   \tableofcontents[hideallsubsections]
 \end{frame}
 
+\setbeamertemplate{frametitle continuation}{}
 
 \section{Introduction}
 
@@ -122,7 +124,7 @@
   \setbeamercovered{transparent}
   \begin{columns}
     \begin{column}{0.5\textwidth}
-      \begin{itemize}[<+->]
+      \begin{itemize}[<+>]
         \item Geometry: triangles, voxels % triangles inherently 2D->good for surfaces, not so much for volumetric data
         \item Materials: colors and other properties % like roughness, normal maps (kinda)
         \item Lights: positions, colors, etc.
@@ -203,50 +205,47 @@
   % picture of pipeline
   % This is the standard sequence of events that render the final image from our scene
   % We'll go over the entire pipeline for sake of completess
-
   \begin{figure}
     \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
   \end{figure}
 \end{frame}
 
-\begin{frame}{Graphics Pipeline---Input}
-  A series of vertices, containing attributes like position, normal, texture coordinates, etc.
-\end{frame}
+\begin{frame}{The Graphics Pipeline}
+  \begin{figure}
+    \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
+  \end{figure}
 
-\begin{frame}{Graphics Pipeline---Vertex Shading}
-
-\end{frame}
-
-\begin{frame}{Graphics Pipeline---Shape Assembly}
-
-\end{frame}
-
-\begin{frame}{Graphics Pipeline---Geometry Shading}
-
-\end{frame}
-
-\begin{frame}{Graphics Pipeline---Rasterization}
-
-\end{frame}
-
-\begin{frame}{Graphics Pipeline---Fragment Shading}
-
-\end{frame}
-
-\begin{frame}{Graphics Pipeline---Testing and Blending}
-
+  \begin{description}[<+| only@+>]
+    \item[Input] A series of vertices containing attributes like position, normal, and texture coordinates
+    \item[Vertex Shading]
+    \item[Shape Assembly]
+    \item[Geometry Shading]
+    \item[Rasterization]
+    \item[Fragment Shading]
+    \item[Testing and Blending]
+  \end{description}
 \end{frame}
 
 \begin{frame}{Compute Shader}
   % just want to introduce the concept since I'll mention them in implementation
 \end{frame}
 
-\begin{frame}{Tesselation}
-  % briefly go over triangle tesselation and where it fits in the pipeline. will probably talk about it more in implementation
+\begin{frame}{Tessellation}
+  % briefly go over triangle tessellation and where it fits in the pipeline. will probably talk about it more in implementation
+
+  \begin{figure}
+    \includegraphics[height=\textheight]{openglwiki_tesselation.png}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Spatial Data Structures}
   % quickly go through one slide each (with picture)
+
+  \begin{figure}
+    % TODO TODO TODO \includegraphics<+>[width=\textwidth]{}
+    \includegraphics<+>[width=\textwidth]{geometry_clipmap.jpg}
+    \includegraphics<+>[width=\textwidth]{octree.png}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{How do we `render'?}
@@ -270,6 +269,8 @@
   % what is is, other approaches, general approaches?
 \end{frame}
 
+% raytracing and raymarching? maybe one slide
+
 % ask for any questions or clarification here? (after related work too maybe?)
 
 \section{Related Work}
@@ -278,19 +279,35 @@
 \begin{frame}{VPLs and RSMs}
   % Just want to introduce the concept of VPLs and RSMs are simple way of doing that
   \begin{description}
-    \item[Virtual Point Lights:] Treat arbitrary objects or locations as light sources.
-    \item[Reflective Shadow Maps:] Treat each pixel of a shadowmap as a VPL. % when rendering project point into shadowmap and gather lighting contributions from VPLs; problem is poor occlusion information and only low frequency lighting
+    \item[Virtual Point Lights] Treat arbitrary objects or locations as light sources
+    \item[Reflective Shadow Maps] Treat each pixel of a shadowmap as a VPL % when rendering project point into shadowmap and gather lighting contributions from VPLs; problem is poor occlusion information and only low frequency lighting
   \end{description}
+
+  \begin{figure}
+    \includegraphics<+>[width=\textwidth]{rsm.png}
+    \includegraphics<+>[width=\textwidth]{rsm_vpl.png}
+  \end{figure}
+
+  % another slide for pros/cons?
 \end{frame}
 
-\subsection{Light Propogation Volumes}
-\begin{frame}{Light Propogation Volumes}
+\subsection{Light Propagation Volumes}
+\begin{frame}{Light Propagation Volumes}
   % low frequency but fairly stable, no occlusion (limited info from reusing), cascaded
+  % iterative process to propagate light throughout scene
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{lpv.png}
+  \end{figure}
 \end{frame}
 
 \subsection{Voxel Cone Tracing}
 \begin{frame}{Voxel Cone Tracing}
   % complete occlusion info, sparse voxel octree, specular reflections
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{vct.png}
+  \end{figure}
 \end{frame}
 
 
@@ -298,6 +315,7 @@
 
 \begin{frame}{Overview of Renderer}
   % flowchart or something showing each render pass
+  % list of all major resources (3ish voxel textures, shadowmap, meshes, materials)
 \end{frame}
 
 \subsection{Voxelization}
@@ -308,7 +326,7 @@
   % fragment shader:
 \end{frame}
 
-\begin{frame}{Voxelization with Tesselator}
+\begin{frame}{Voxelization with Tessellator}
 \end{frame}
 
 \subsection{Radiance Injection and Filtering}
@@ -343,15 +361,33 @@
 \begin{frame}{Radiance Filtering}
   Radiance texture contains multiple \textbf{levels} (mipmaps). Each level is half the size of the previous. A compute shader performs a 2x2x2 box filter for each level to determine the filtered value.
 
+  \begin{center}
+    \begin{tikzpicture}
+      \draw[step=1.0, gray] (0, 0) grid (4, 4);
+      \draw[step=2.0, black, ultra thick] (0, 0) grid (4, 4);
+      \draw[black, ->, ultra thick] (4.25, 2) to (4.75, 2);
+      \draw[step=2.0, black, ultra thick, xshift=5.0cm] (0, 0) grid (4, 4);
+    \end{tikzpicture}
+  \end{center}
+
   % show 2D box filter
   % show the four images
+\end{frame}
+
+\begin{frame}{Radiance Filtering}
+  \begin{figure}
+    \includegraphics<+>[width=\textwidth]{mipmap0.png}
+    \includegraphics<+>[width=\textwidth]{mipmap1.png}
+    \includegraphics<+>[width=\textwidth]{mipmap2.png}
+    \includegraphics<+>[width=\textwidth]{mipmap3.png}
+  \end{figure}
 \end{frame}
 
 \subsection{Final Shading}
 \begin{frame}{Depth Prepass}
   An optimization to minimize the number of shaded fragments.
 
-  Prefill the depth buffer so lighting (including the relatively expensive voxel cone tracing) will only be performed on the visible fragments of the scene. % remind of depth test
+  Prefill the depth buffer so lighting (including the relatively expensive voxel cone tracing) will only be performed on the visible fragments of the scene. % remind of depth test and this is only for forward rendering (deferred already does this when creating gbuffer)
 \end{frame}
 
 \begin{frame}{Final Shading}
@@ -374,20 +410,36 @@
 \end{frame}
 
 
-\section{Results}
+\section{Results and Conclusions}
 
-\begin{frame}{Screenshots}
+\begin{frame}{Test Setup}
 \end{frame}
 
-\begin{frame}{Performance \& Memory Usage}
+\begin{frame}{Performance}
 \end{frame}
 
-\begin{frame}{Validation}
-  % explain difficulties in comparing to others but still give numbers or something
+\begin{frame}[allowframebreaks]{Rasterized vs. Tesselated Voxels}
+  \begin{figure}
+    \centering
+    \begin{subfigure}[t]{0.5\textwidth}
+        \includegraphics[width=\textwidth]{results_voxelraster.png}
+        \caption{Rasterized voxels}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.5\textwidth}
+        \includegraphics[width=\textwidth]{results_voxeltess.png}
+        \caption{Tessellated voxels}
+    \end{subfigure}
+  \end{figure}
+
+  \framebreak
+  TODO table + graph
+
+  % TODO have on their own slides too?
 \end{frame}
 
-
-\section{Conclusion}
+\begin{frame}{Voxel Warping}
+\end{frame}
 
 {\setbeamertemplate{frame footer}{*Find the source here: \url{github.com/sfreed141/vct}}
 \begin{frame}{Conclusion}
