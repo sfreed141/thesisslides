@@ -12,19 +12,24 @@
 \usepackage{xspace}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
 
-\title{Real-Time Global Illumination using Voxelization}
-% \subtitle{}
-% \date{\today}
-\date{}
-\author{Sam Freed\\Advisor: Dr.\ Christian Eckhardt}
-\institute{Cal Poly SLO}
+\usepackage{multimedia}
+\usepackage{hyperref}
+\usepackage{subcaption}
+
+\graphicspath{ {figures/} }
+
+\title{Tesselated Voxelization for Global Illumination using Voxel Cone Tracing}
+%\subtitle{}
+\date{June 2018}
+\author{Sam Freed\\\\Committee Members:\\ Dr.\ Christian Eckhardt (chair), Dr.\ Maria Pantoja, Dr.\ Aaron Keen\\}
+\institute{California Polytechnic State University, San Luis Obispo}
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}
 
 \AtBeginSection[]
 {
 	\begin{frame}
     	\frametitle{Outline}
-        \tableofcontents[currentsection]
+        \tableofcontents[currentsection,hideothersubsections] % TODO show subsections/frames?
 	\end{frame}
 }
 
@@ -32,82 +37,378 @@
 
 \frame{\titlepage}
 
+% Go over outlines of presentation. Mention the subsections briefly as appropriate.
 \begin{frame}{Outline}
   \setbeamertemplate{section in toc}[sections numbered]
-  \tableofcontents[]
+  \tableofcontents[hideallsubsections]
 \end{frame}
+
 
 \section{Introduction}
 
-\begin{frame}[fragile]{Metropolis}
-
-  The \themename theme is a Beamer theme with minimal visual noise
-  inspired by the \href{https://github.com/hsrmbeamertheme/hsrmbeamertheme}{\textsc{hsrm} Beamer
-  Theme} by Benjamin Weiss.
-
-  Enable the theme by loading
-
-  \begin{verbatim}    \documentclass{beamer}
-    \usetheme{metropolis}\end{verbatim}
-
-  Note, that you have to have Mozilla's \emph{Fira Sans} font and XeTeX
-  installed to enjoy this wonderful typography.
-\end{frame}
-\begin{frame}[fragile]{Sections}
-  Sections group slides of the same topic
-
-  \begin{verbatim}    \section{Elements}\end{verbatim}
-
-  for which \themename provides a nice progress indicator \ldots
+\begin{frame}{Introduction}
+% who i am, thanks for coming, blah blah
 \end{frame}
 
-\section{Titleformats}
-
-\begin{frame}{Metropolis titleformats}
-	\themename supports 4 different titleformats:
-	\begin{itemize}
-		\item Regular
-		\item \textsc{Smallcaps}
-		\item \textsc{allsmallcaps}
-		\item ALLCAPS
-	\end{itemize}
-	They can either be set at once for every title type or individually.
+\begin{frame}{Teaser}
+% video or screenshots, show good lighting + moving objects
+\movie[autostart,showcontrols]{\textcolor{black}{\rule{\textwidth}{0.9\textheight}}}{test.webm}
 \end{frame}
 
-{
-    \metroset{titleformat frame=smallcaps}
-\begin{frame}{Small caps}
-	This frame uses the \texttt{smallcaps} titleformat.
-
-	\begin{alertblock}{Potential Problems}
-		Be aware, that not every font supports small caps. If for example you typeset your presentation with pdfTeX and the Computer Modern Sans Serif font, every text in smallcaps will be typeset with the Computer Modern Serif font instead.
-	\end{alertblock}
+\begin{frame}{What did I just see?}
+% real time gi of course!
 \end{frame}
-}
 
-{
-\metroset{titleformat frame=allsmallcaps}
-\begin{frame}{All small caps}
-	This frame uses the \texttt{allsmallcaps} titleformat.
-
-	\begin{alertblock}{Potential problems}
-		As this titleformat also uses smallcaps you face the same problems as with the \texttt{smallcaps} titleformat. Additionally this format can cause some other problems. Please refer to the documentation if you consider using it.
-
-		As a rule of thumb: Just use it for plaintext-only titles.
-	\end{alertblock}
+\subsection{Motivations}
+\begin{frame}{Motivations}
+  \begin{enumerate}
+    \centering
+    \item Real-time global illumination is difficult % lots of computation
+    \item Limited reference material % open-source, cross-platform (-apple), no large engine, any documentation or explanation
+    \pause
+    \item I think it's cool % the real reason tbh
+  \end{enumerate}
 \end{frame}
-}
 
-{
-\metroset{titleformat frame=allcaps}
-\begin{frame}{All caps}
-	This frame uses the \texttt{allcaps} titleformat.
-
-	\begin{alertblock}{Potential Problems}
-		This titleformat is not as problematic as the \texttt{allsmallcaps} format, but basically suffers from the same deficiencies. So please have a look at the documentation if you want to use it.
-	\end{alertblock}
+\begin{frame}{Motivations}
+  % Want to go from this...to _this_
+  % \begin{columns}
+  %   \begin{column}{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[width=\textwidth]{gi_off.png}
+        :(
+      \end{figure}
+    \end{frame} \begin{frame}{Motivations}
+  %   \end{column}
+  %   \begin{column}{0.5\textwidth}
+      \begin{figure}
+        \includegraphics[width=\textwidth]{gi_on.png}
+        :)
+      \end{figure}
+  %   \end{column}
+  % \end{columns}
 \end{frame}
-}
+
+\subsection{Contributions}
+\begin{frame}{Contributions}
+  \begin{itemize}
+    \item Open-source, cross-platform implementation of global illumination using voxel cone tracing
+    \item Detailed documentation on the algorithm and implementation % thesis and code comments "self documenting" :)
+    \item Investigation into warped voxels and a comparison between raster and tesselation based voxelization
+  \end{itemize}
+\end{frame}
+
+
+\section{Background}
+
+\subsection{Computer Graphics}
+\begin{frame}{Computer Graphics Primer}
+  \begin{block}{Goal}
+    Given a virtual description of a scene render an image.
+  \end{block}
+
+  \begin{block}{Big Issues}
+    \begin{enumerate}
+      \item How do we represent a scene? What information is required?  % geometry (triangles, voxels), materials (colors, properties), lights (type, position, color, direction), etc.
+      \item How is a 3D scene represented as a 2D image?  % implies some transformation needed
+      \item How do we `render'---how is the final pixel color computed? % lighting/shading model; this is the focus of this thesis
+    \end{enumerate}
+  \end{block}
+  % rtr objects -> world space -> screen space
+  % goal of computer graphics; graphics pipeline; transforms and other common stuff
+\end{frame}
+
+\begin{frame}{How do we represent a scene?}
+  \setbeamercovered{transparent}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{itemize}[<+->]
+        \item Geometry: triangles, voxels % triangles inherently 2D->good for surfaces, not so much for volumetric data
+        \item Materials: colors and other properties % like roughness, normal maps (kinda)
+        \item Lights: positions, colors, etc.
+      \end{itemize}
+    \end{column}
+    \begin{column}{0.5\textwidth}
+      \only<1>{
+        \begin{figure}
+          \begin{subfigure}{\textwidth}
+            \includegraphics[width=\textwidth]{wireframe.png}
+          \end{subfigure}
+          \begin{subfigure}{\textwidth}
+            \includegraphics[width=\textwidth]{voxels.png}
+          \end{subfigure}
+        \end{figure}}
+
+      \only<2>{
+        \begin{figure}
+          \begin{subfigure}{\textwidth}
+            \includegraphics[width=\textwidth]{albedo.png}
+          \end{subfigure}
+          \begin{subfigure}{\textwidth}
+            \includegraphics[width=\textwidth]{roughness.png}
+          \end{subfigure}
+        \end{figure}}
+
+      \only<3>{
+        \begin{figure}
+          \begin{subfigure}{\textwidth}
+            \includegraphics[width=\textwidth]{nogi.png}
+          \end{subfigure}
+          \begin{subfigure}{\textwidth}
+            \includegraphics[width=\textwidth]{gi.png}
+          \end{subfigure}
+        \end{figure}}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+{\setbeamertemplate{frame footer}{image from Real-Time Rendering} % TODO cite
+\begin{frame}{How is a 3D scene represented as a 2D image?}
+  Math!
+
+  All coordinates are transformed multiple times before ending up at their appropriate place on the screen.
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{rtr_fig2_1.png}
+  \end{figure}
+
+\end{frame}}
+
+
+\begin{frame}{How is a 3D scene represented as a 2D image?}
+  % picture of coordinate systems and give brief explanation, since explain more along with the graphics pipeline
+  % showing this so everyone is comfortable when explaining algorithms
+  % ...and this is accomplished with <flick> THE GRAPHICS PIPELIIIIIIINE
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{learnopengl_coordinate_systems.png}
+  \end{figure}
+
+  \begin{description}[<+| only@+>]
+    \item[Local/Object Space] coordinate system relative to a single object
+    \item[World Space] a global coordinate system for the virtual world
+    \item[View Space] coordinates are with respect to the camera
+    \item[Clip Space/NDC] defines a frustum in which objects will be rasterized % those outside the frustum are clipped
+    \item[Screen Space] coordinates are the pixel position and a depth value
+  \end{description}
+
+  % Also other spaces, like texture space [0, 1], image space (integral coordinates),
+
+\end{frame}
+
+\begin{frame}{How is a 3D scene represented as a 2D image?}
+  \begin{center}
+    \huge\textbf{The Graphics Pipeline}
+  \end{center}
+  % picture of pipeline
+  % This is the standard sequence of events that render the final image from our scene
+  % We'll go over the entire pipeline for sake of completess
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Graphics Pipeline---Input}
+  A series of vertices, containing attributes like position, normal, texture coordinates, etc.
+\end{frame}
+
+\begin{frame}{Graphics Pipeline---Vertex Shading}
+
+\end{frame}
+
+\begin{frame}{Graphics Pipeline---Shape Assembly}
+
+\end{frame}
+
+\begin{frame}{Graphics Pipeline---Geometry Shading}
+
+\end{frame}
+
+\begin{frame}{Graphics Pipeline---Rasterization}
+
+\end{frame}
+
+\begin{frame}{Graphics Pipeline---Fragment Shading}
+
+\end{frame}
+
+\begin{frame}{Graphics Pipeline---Testing and Blending}
+
+\end{frame}
+
+\begin{frame}{Compute Shader}
+  % just want to introduce the concept since I'll mention them in implementation
+\end{frame}
+
+\begin{frame}{Tesselation}
+  % briefly go over triangle tesselation and where it fits in the pipeline. will probably talk about it more in implementation
+\end{frame}
+
+\begin{frame}{Spatial Data Structures}
+  % quickly go through one slide each (with picture)
+\end{frame}
+
+\begin{frame}{How do we `render'?}
+  % We need a shading model: a way to compute a color from the geometry, lights, and materials we have in the scene for a particular point
+  % Makes sense to model this based on the real-world sooo
+  % See the next section!
+\end{frame}
+
+\subsection{Lighting}
+\begin{frame}{Radiance and the Rendering Equation}
+  % Semi-detailed, need to have audience at least have some idea what's going on
+  % Note how this is computationally intensive -> need to resort to approximations
+\end{frame}
+
+\begin{frame}{Direct Lighting}
+  % use as example of how lighting works, some intuition on rendering equation
+  % should help to understand indirect lighting
+\end{frame}
+
+\begin{frame}{Indirect Lighting}
+  % what is is, other approaches, general approaches?
+\end{frame}
+
+% ask for any questions or clarification here? (after related work too maybe?)
+
+\section{Related Work}
+
+\subsection{VPLs and RSMs}
+\begin{frame}{VPLs and RSMs}
+  % Just want to introduce the concept of VPLs and RSMs are simple way of doing that
+  \begin{description}
+    \item[Virtual Point Lights:] Treat arbitrary objects or locations as light sources.
+    \item[Reflective Shadow Maps:] Treat each pixel of a shadowmap as a VPL. % when rendering project point into shadowmap and gather lighting contributions from VPLs; problem is poor occlusion information and only low frequency lighting
+  \end{description}
+\end{frame}
+
+\subsection{Light Propogation Volumes}
+\begin{frame}{Light Propogation Volumes}
+  % low frequency but fairly stable, no occlusion (limited info from reusing), cascaded
+\end{frame}
+
+\subsection{Voxel Cone Tracing}
+\begin{frame}{Voxel Cone Tracing}
+  % complete occlusion info, sparse voxel octree, specular reflections
+\end{frame}
+
+
+\section{Implementation}
+
+\begin{frame}{Overview of Renderer}
+  % flowchart or something showing each render pass
+\end{frame}
+
+\subsection{Voxelization}
+\begin{frame}{Voxelization with Rasterizer}
+  % main idea: rasterized fragments correspond to voxel
+  % setup: need projection matrices
+  % geometry shader: choose dominant axis and project
+  % fragment shader:
+\end{frame}
+
+\begin{frame}{Voxelization with Tesselator}
+\end{frame}
+
+\subsection{Radiance Injection and Filtering}
+\begin{frame}{Radiance Injection}
+  \begin{block}{Goal}
+    Create virtual point lights for all geometry hit by the light.
+
+    These lights approximate a single-bounce of indirect lighting.
+  \end{block}
+
+  Another voxel texture stores the locations of these VPLs.
+\end{frame}
+
+\begin{frame}{Radiance Injection---Shadow Mapping}
+  To determine where the virtual point lights should be, we use a \textbf{shadowmap}.
+
+  Render the scene from the \textit{light}'s point of view.
+
+  Only interested in depth values % important for us: along with the light matrix we can reconstruct world positions
+  % picture
+  \footnote{An RSM could be made by also saving surface color and normal.}
+
+  % implementation? ortho matrix, projection
+\end{frame}
+
+\begin{frame}{Radiance Injection---Injecting VPLs}
+  For each pixel in the shadowmap, find it's voxel index and insert the corresponding color into the radiance texture.
+
+  Using the light matrix and stored depth value, we compute the point's world space position.
+\end{frame}
+
+\begin{frame}{Radiance Filtering}
+  Radiance texture contains multiple \textbf{levels} (mipmaps). Each level is half the size of the previous. A compute shader performs a 2x2x2 box filter for each level to determine the filtered value.
+
+  % show 2D box filter
+  % show the four images
+\end{frame}
+
+\subsection{Final Shading}
+\begin{frame}{Depth Prepass}
+  An optimization to minimize the number of shaded fragments.
+
+  Prefill the depth buffer so lighting (including the relatively expensive voxel cone tracing) will only be performed on the visible fragments of the scene. % remind of depth test
+\end{frame}
+
+\begin{frame}{Final Shading}
+  % outline (direct + diffuse indirect + specular indirect)
+  % inputs are lights, material, and fragment (with position, normal, texture coordinates)
+\end{frame}
+
+\begin{frame}{Direct Lighting}
+  % cook torrance too?
+  % don't forget shadows
+\end{frame}
+
+\begin{frame}{Indirect Lighting}
+% explain voxel cone tracing
+% the idea (raymarching + mipmaps), choosing cone angles + dirs, diffuse indirect, specular indirect, cone tracing itself
+\end{frame}
+
+\subsection{Voxel Warping}
+\begin{frame}{Voxel Warping}
+\end{frame}
+
+
+\section{Results}
+
+\begin{frame}{Screenshots}
+\end{frame}
+
+\begin{frame}{Performance \& Memory Usage}
+\end{frame}
+
+\begin{frame}{Validation}
+  % explain difficulties in comparing to others but still give numbers or something
+\end{frame}
+
+
+\section{Conclusion}
+
+{\setbeamertemplate{frame footer}{*Find the source here: \url{github.com/sfreed141/vct}}
+\begin{frame}{Conclusion}
+\end{frame}}
+
+\begin{frame}{Future Work}
+\end{frame}
+
+\begin{frame}{}
+  \begin{center}
+    \LARGE Thank you!
+  \end{center}
+\end{frame}
+
+\begin{frame}{}
+  \begin{center}
+    \LARGE Questions?
+  \end{center}
+\end{frame}
+
+% TODO bibliography slides?
 
 \section{Elements}
 
@@ -158,13 +459,7 @@ or show \textbf{bold} results.\end{verbatim}
       \end{description}
   \end{columns}
 \end{frame}
-\begin{frame}{Animation}
-  \begin{itemize}[<+- | alert@+>]
-    \item \alert<4>{This is\only<4>{ really} important}
-    \item Now this
-    \item And now this
-  \end{itemize}
-\end{frame}
+
 \begin{frame}{Figures}
   \begin{figure}
     \newcounter{density}
@@ -191,6 +486,7 @@ or show \textbf{bold} results.\end{verbatim}
     \href{http://www.texample.net/tikz/examples/rotated-polygons/}{texample.net}.}
   \end{figure}
 \end{frame}
+
 \begin{frame}{Tables}
   \begin{table}
     \caption{Largest cities in the world (source: Wikipedia)}
@@ -206,6 +502,7 @@ or show \textbf{bold} results.\end{verbatim}
     \end{tabular}
   \end{table}
 \end{frame}
+
 \begin{frame}{Blocks}
   Three different block environments are pre-defined and may be styled with an
   optional background color.
@@ -242,6 +539,7 @@ or show \textbf{bold} results.\end{verbatim}
 
   \end{columns}
 \end{frame}
+
 \begin{frame}{Math}
   \begin{equation*}
     e = \lim_{n\to \infty} \left(1 + \frac{1}{n}\right)^n
@@ -263,6 +561,7 @@ or show \textbf{bold} results.\end{verbatim}
     \end{tikzpicture}
   \end{figure}
 \end{frame}
+
 \begin{frame}{Bar charts}
   \begin{figure}
     \begin{tikzpicture}
@@ -284,45 +583,16 @@ or show \textbf{bold} results.\end{verbatim}
     \end{tikzpicture}
   \end{figure}
 \end{frame}
+
 \begin{frame}{Quotes}
   \begin{quote}
     Veni, Vidi, Vici
   \end{quote}
 \end{frame}
 
-{%
-\setbeamertemplate{frame footer}{My custom footer}
-\begin{frame}[fragile]{Frame footer}
-    \themename defines a custom beamer template to add a text to the footer. It can be set via
-    \begin{verbatim}\setbeamertemplate{frame footer}{My custom footer}\end{verbatim}
-\end{frame}
-}
-
 \begin{frame}{References}
   Some references to showcase [allowframebreaks] \cite{knuth92,ConcreteMath,Simpson,Er01,greenwade93}
 \end{frame}
-
-\section{Conclusion}
-
-\begin{frame}{Summary}
-
-  Get the source of this theme and the demo presentation from
-
-  \begin{center}\url{github.com/matze/mtheme}\end{center}
-
-  The theme \emph{itself} is licensed under a
-  \href{http://creativecommons.org/licenses/by-sa/4.0/}{Creative Commons
-  Attribution-ShareAlike 4.0 International License}.
-
-  \begin{center}\ccbysa\end{center}
-
-\end{frame}
-
-{\setbeamercolor{palette primary}{fg=black, bg=yellow}
-\begin{frame}[standout]
-  Questions?
-\end{frame}
-}
 
 \appendix
 
