@@ -50,29 +50,20 @@
 
 \begin{frame}{Introduction}
 % who i am, thanks for coming, blah blah
+
+% what is global illumination and why important
+% show AO and baked? or at least talk about it and show pictures
+% we want FULL GI
+  \begin{block}{Computer Graphics}
+    How can we model light in a virtual world?
+
+    Physically accurate lighting too complex for real-time---approximate!
+  \end{block}
 \end{frame}
 
-\begin{frame}{Teaser}
-% video or screenshots, show good lighting + moving objects
-\movie[autostart,showcontrols]{\textcolor{black}{\rule{\textwidth}{0.9\textheight}}}{test.webm}
-\end{frame}
+\begin{frame}{Computer Graphics}
+  % here we only have simple lighting. the ambient/indirect light is the difficult part to compute
 
-\begin{frame}{What did I just see?}
-% real time gi of course!
-\end{frame}
-
-\subsection{Motivations}
-\begin{frame}{Motivations}
-  \begin{enumerate}
-    \centering
-    \item Real-time global illumination is difficult % lots of computation
-    \item Limited reference material % open-source, cross-platform (-apple), no large engine, any documentation or explanation
-    \pause
-    \item I think it's cool % the real reason tbh
-  \end{enumerate}
-\end{frame}
-
-\begin{frame}{Motivations}
   % Want to go from this...to _this_
   % \begin{columns}
   %   \begin{column}{0.5\textwidth}
@@ -91,12 +82,43 @@
   % \end{columns}
 \end{frame}
 
+\begin{frame}{Real-Time Global Illumination}
+  Various approaches to approximating indirect light.
+
+  \begin{description}
+    \item[Constant] Fixed fraction of ambient light % as seen in first image
+    \item[Partial] Ambient occlusion, shadows, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
+    \item[Static] Baked lighting
+    \item[Dynamic] Light Propagation Volumes, Voxel Cone Tracing
+  \end{description}
+\end{frame}
+
+% \begin{frame}{Teaser}
+% % video or screenshots, show good lighting + moving objects
+% \movie[autostart,showcontrols]{\textcolor{black}{\rule{\textwidth}{0.9\textheight}}}{test.webm}
+% \end{frame}
+
+% \begin{frame}{What did I just see?}
+% % real time gi of course!
+% \end{frame}
+
+\subsection{Motivations}
+\begin{frame}{Motivations}
+  \begin{enumerate}
+    \centering
+    \item Real-time global illumination is difficult % lots of computation
+    \item Limited reference material % open-source, cross-platform (-apple), no large engine, any documentation or explanation
+    \pause
+    \item I think it's cool % the real reason tbh
+  \end{enumerate}
+\end{frame}
+
 \subsection{Contributions}
 \begin{frame}{Contributions}
   \begin{itemize}
     \item Open-source, cross-platform implementation of global illumination using voxel cone tracing
-    \item Detailed documentation on the algorithm and implementation % thesis and code comments "self documenting" :)
-    \item Investigation into warped voxels and a comparison between raster and tesselation based voxelization
+    \item Comparison between rasterization and tessellation based voxelization
+    \item Investigation into warped voxels % more on this later, first I'd like to give a crash course in graphics and an overview of other solutions to real time gi
   \end{itemize}
 \end{frame}
 
@@ -317,6 +339,11 @@
   % low frequency but fairly stable, no occlusion (limited info from reusing), cascaded
   % iterative process to propagate light throughout scene
 
+  \begin{itemize}
+    \item Store VPLs in a voxel grid
+    \item Iteratively propagate lighting contribution until stable
+  \end{itemize}
+
   \begin{figure}
     \includegraphics[width=\textwidth]{lpv.png}
   \end{figure}
@@ -326,17 +353,23 @@
 \begin{frame}{Voxel Cone Tracing}
   % complete occlusion info, sparse voxel octree, specular reflections
 
+  \begin{itemize}
+    \item Sparse voxel octree % occlusion information
+    \item High resolution (diffuse and specular lighting)
+  \end{itemize}
+
   \begin{figure}
     \includegraphics[width=\textwidth]{vct.png}
   \end{figure}
 \end{frame}
 
 % TODO quick recap here?
+% most important bits: voxels represent 3d data well and thus voxelization is important; vpls are core part of most gi algorithms; lpv and vct use regular grid
 
-\begin{frame}{What am I doing?}
+\begin{frame}{What am I doing?} % this is the research question
   \begin{enumerate}
-    \item Compare two approaches for scene voxelization % voxelization is a core part of the algorithm; tessellated version also not restricted to rasterizer
-    \item What if voxel sizes were allowed to be continuous? % voxel warping
+    \item Comparing two approaches for scene voxelization % voxelization is a core part of the algorithm; tessellated version also not restricted to rasterizer
+    \item Investigating continuous voxel sizes % voxel warping; idea is to support bigger scenes and increase resolution near camera without abrupt changes in voxel density
   \end{enumerate}
 \end{frame}
 
@@ -375,10 +408,15 @@
 
 \subsection{Voxelization}
 \begin{frame}{Voxelization with Rasterizer}
+  Each fragment corresponds to a voxel
   % main idea: rasterized fragments correspond to voxel
   % setup: need projection matrices
   % geometry shader: choose dominant axis and project
   % fragment shader:
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{rasterizedvoxelization}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Voxelization with Tessellator}
@@ -386,13 +424,14 @@
 
 \subsection{Radiance Injection and Filtering}
 \begin{frame}{Radiance Injection}
-  \begin{block}{Goal}
-    Create virtual point lights for all geometry hit by the light.
+  \begin{itemize}
+    \item Create virtual point lights for all geometry hit by the light.
+    \item These lights approximate a single-bounce of indirect lighting.
+  \end{itemize}
 
-    These lights approximate a single-bounce of indirect lighting.
-  \end{block}
-
-  Another voxel texture stores the locations of these VPLs.
+  \begin{figure}
+    \includegraphics[width=0.8\textwidth]{lightinjection}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Radiance Injection---Shadow Mapping}
@@ -400,17 +439,23 @@
 
   Render the scene from the \textit{light}'s point of view.
 
-  Only interested in depth values % important for us: along with the light matrix we can reconstruct world positions
+  % Only interested in depth values important for us: along with the light matrix we can reconstruct world positions
   % picture
-  \footnote{An RSM could be made by also saving surface color and normal.}
-
   % implementation? ortho matrix, projection
+
+  \begin{figure}
+    \includegraphics[width=0.8\textwidth]{shadowmap}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Radiance Injection---Injecting VPLs}
   For each pixel in the shadowmap, find it's voxel index and insert the corresponding color into the radiance texture.
 
   Using the light matrix and stored depth value, we compute the point's world space position.
+
+  \begin{figure}
+    \includegraphics[width=0.8\textwidth]{radiance_nolighting}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Radiance Filtering}
@@ -468,13 +513,18 @@
 
 \section{Results and Conclusions}
 
-\begin{frame}{Test Setup}
-\end{frame}
+% \begin{frame}{Test Setup}
+% \end{frame}
 
+% First, and most important, test was to measure the general performance of the algorithm. We also varied the voxel grid resolution and screen resolution to see how it affected performance. Thankfully we meet the 60fps goal for all tested resolutions!
 \begin{frame}{Performance}
+  % pictures of different voxel grid dimensions
+  % graphs of performance times for each
+  % analysis (which render passes were affected by what, etc)
 \end{frame}
 
-\begin{frame}[allowframebreaks]{Rasterized vs. Tesselated Voxels}
+% Next we compared the results of the two voxelization algorithms. Visually, they are practically indistiguishable. Performance-wise the rasterization based approach was slightly faster. We might be able to close the gap with more optimizations. One benefit of the tessellated voxelization is the transformed points are not restricted to the viewport resolution.
+\begin{frame}[allowframebreaks]{Rasterized vs. Tessellated Voxels}
   \begin{figure}
     \centering
     \begin{subfigure}[t]{0.5\textwidth}
@@ -494,14 +544,19 @@
   % TODO have on their own slides too?
 \end{frame}
 
+% Lastly we evaluated our voxel warping...
 \begin{frame}{Voxel Warping}
 \end{frame}
 
 {\setbeamertemplate{frame footer}{*Find the source here: \url{github.com/sfreed141/vct}}
 \begin{frame}{Conclusion}
+  % wrap up and list contributions again
 \end{frame}}
 
 \begin{frame}{Future Work}
+  % other ways of adjusting resolution are more feasible due to temporal artifacts
+  % spherical harmonics, directional filtering
+  % grab bag of other optimizations related to voxel cone tracing
 \end{frame}
 
 \begin{frame}{}
