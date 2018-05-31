@@ -98,7 +98,7 @@
   \begin{description}
     \item[Constant] Fixed fraction of ambient light % as seen in first image
     \item[Partial] Ambient occlusion, shadows, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
-    \item[Static] Baked lighting
+    \item[Static] Baked lighting, light probes
     \item[Dynamic] Light Propagation Volumes, Voxel Cone Tracing
   \end{description}
 \end{frame}
@@ -607,14 +607,29 @@
   \end{description}
 \end{frame}
 
-% \begin{frame}{Direct Lighting}
-%   % cook torrance too?
-%   % don't forget shadows
-% \end{frame}
+\begin{frame}{Direct Lighting}
+  % psuedocode? or just picture of direct light and explain?
+\end{frame}
 
 \begin{frame}{Indirect Lighting}
 % explain voxel cone tracing
 % the idea (raymarching + mipmaps), choosing cone angles + dirs, diffuse indirect, specular indirect, cone tracing itself
+
+% picture of cones again first?
+
+% To approximate indirect lighting (recall that we are approximating a hemispherical surface integral) we use voxel cone tracing. The idea combines raytracing and mipmapping: we are raymarching through our filtered radiance values. The level to sample from is determined by the cone's diameter: at each step we increase the cone's height (also increasing the diameter)
+
+% Here we are determining the indirect light at the point on this yellow sphere here with surface normal n. At each step, we sample from a higher level corresponding to the cone's diameter. We use 5 cones to gather diffuse (low frequency) light and 1 cone for specular lights. The cone tracing also gives us occlusion information, which we use to attenuate the lighting.
+  \begin{figure}
+    \includegraphics<+>[width=\textwidth]{conetrace1}
+    \includegraphics<+>[width=\textwidth]{conetrace2}
+    \includegraphics<+>[width=\textwidth]{conetrace3}
+    \includegraphics<+>[width=\textwidth]{conetrace4}
+    \includegraphics<+>[width=\textwidth]{conetrace5}
+    \includegraphics<+>[width=\textwidth]{debugIndirect_noOcclusion}
+    \includegraphics<+>[width=\textwidth]{debugReflections}
+    \includegraphics<+>[width=\textwidth]{debugOcclusion}
+  \end{figure}
 \end{frame}
 
 \subsection{Voxel Warping}
