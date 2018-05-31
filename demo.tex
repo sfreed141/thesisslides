@@ -29,10 +29,10 @@
   }%
 }
 
-\title{Tesselated Voxelization for Global Illumination using Voxel Cone Tracing}
+\title{Tessellated Voxelization for Global Illumination using Voxel Cone Tracing}
 %\subtitle{}
 \date{June 2018}
-\author{Sam Freed\\\\Committee Members:\\ Dr.\ Christian Eckhardt (chair), Dr.\ Maria Pantoja, Dr.\ Aaron Keen\\}
+\author{Sam Freed\\\\Advisor: Dr.\ Christian Eckhardt\\Committee Members: Dr.\ Maria Pantoja, Dr.\ Aaron Keen\\}
 \institute{California Polytechnic State University, San Luis Obispo}
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}
 
@@ -119,7 +119,7 @@
     \item Real-time global illumination is difficult % lots of computation
     \item Limited reference material % open-source, cross-platform (-apple), no large engine, any documentation or explanation
     \pause
-    \item I think it's cool % the real reason tbh
+    \item It's cool % the real reason tbh
   \end{enumerate}
 \end{frame}
 
@@ -248,19 +248,21 @@
   \end{figure}
 
   \begin{description}[<+| only@+>]
-    \item[Input] A series of vertices containing attributes like position, normal, and texture coordinates
-    \item[Vertex Shading]
-    \item[Shape Assembly]
-    \item[Geometry Shading]
-    \item[Rasterization]
-    \item[Fragment Shading]
-    \item[Testing and Blending]
+    \item[Input] A series of vertices containing attributes like position, normal, and texture coordinates.
+    \item[Vertex Shading] Executed for each vertex. Usually transforms points to clip space.
+    \item[Shape Assembly] Form geometric primitives from vertices (like triangles).
+    \item[Geometry Shading] Operate on primitives.
+    \item[Rasterization] Generate fragments for pixels covered by primitives.
+    \item[Fragment Shading] Executed for each fragment. Usually shading occurs here.
+    \item[Testing and Blending] Depth testing and alpha blending.
   \end{description}
+
+  % There are also compute shaders for operating on arbitrary data and tessellation shaders for dynamically subdividing primitives (as we'll see in a bit).
 \end{frame}
 
-\begin{frame}{Compute Shader}
-  % just want to introduce the concept since I'll mention them in implementation
-\end{frame}
+% \begin{frame}{Compute Shader}
+%   % just want to introduce the concept since I'll mention them in implementation
+% \end{frame}
 
 % \begin{frame}{Tessellation}
 %   % briefly go over triangle tessellation and where it fits in the pipeline. will probably talk about it more in implementation
@@ -645,27 +647,31 @@
 
 % First, and most important, test was to measure the general performance of the algorithm. We also varied the voxel grid resolution and screen resolution to see how it affected performance. Thankfully we meet the 60fps goal for all tested resolutions!
 \begin{frame}{Performance}
+  \begin{figure}
+    \includegraphics<1>[width=\textwidth]{results_720_64}
+    \includegraphics<2>[width=\textwidth]{results_720_128}
+    \includegraphics<3>[width=\textwidth]{results_720_256}
+    \caption*{
+      \only<1>{$64^3$ voxel grid}
+      \only<2>{$128^3$ voxel grid}
+      \only<3>{\\$256^3$ voxel grid}
+    }
+  \end{figure}
   % pictures of different voxel grid dimensions
   % graphs of performance times for each
   % analysis (which render passes were affected by what, etc)
 \end{frame}
 
 % Next we compared the results of the two voxelization algorithms. Visually, they are practically indistiguishable. Performance-wise the rasterization based approach was slightly faster. We might be able to close the gap with more optimizations. One benefit of the tessellated voxelization is the transformed points are not restricted to the viewport resolution.
-\begin{frame}[allowframebreaks]{Rasterized vs. Tessellated Voxels}
+\begin{frame}{Rasterized vs. Tessellated Voxels}
   \begin{figure}
-    \centering
-    \begin{subfigure}[t]{0.5\textwidth}
-        \includegraphics[width=\textwidth]{results_voxelraster.png}
-        \caption{Rasterized voxels}
-    \end{subfigure}
-    ~
-    \begin{subfigure}[t]{0.5\textwidth}
-        \includegraphics[width=\textwidth]{results_voxeltess.png}
-        \caption{Tessellated voxels}
-    \end{subfigure}
+      \includegraphics<1>[width=\textwidth]{results_voxelraster}
+      \includegraphics<2>[width=\textwidth]{results_voxeltess}
+      \caption*{\only<1>{Rasterized voxels}\only<2>{\\Tessellated voxels}}
   \end{figure}
+\end{frame}
 
-  \framebreak
+\begin{frame}{Rasterized vs. Tessellated Voxels}
   TODO table + graph
 
   % TODO have on their own slides too?
