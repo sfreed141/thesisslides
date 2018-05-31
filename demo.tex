@@ -16,8 +16,18 @@
 \usepackage{hyperref}
 \usepackage{subcaption}
 \usepackage{tikz}
+\usepackage{bm}
 
 \graphicspath{ {figures/} }
+
+% https://tex.stackexchange.com/a/160827
+\newcommand\Wider[2][3em]{%
+\makebox[\linewidth][c]{%
+  \begin{minipage}{\dimexpr\textwidth+#1\relax}
+  \raggedright#2
+  \end{minipage}%
+  }%
+}
 
 \title{Tesselated Voxelization for Global Illumination using Voxel Cone Tracing}
 %\subtitle{}
@@ -291,25 +301,49 @@
   \end{figure}
 \end{frame}
 
+\subsection{Lighting}
 \begin{frame}{How do we `render'?}
   % We need a shading model: a way to compute a color from the geometry, lights, and materials we have in the scene for a particular point
   % Makes sense to model this based on the real-world sooo
-  % See the next section!
+  \begin{figure}
+    \includegraphics<+>[width=\textwidth]{lighting}
+    \includegraphics<+>[width=\textwidth]{indirectlighting}
+  \end{figure}
 \end{frame}
 
-\subsection{Lighting}
-\begin{frame}{Radiance and the Rendering Equation}
-  % Semi-detailed, need to have audience at least have some idea what's going on
+\begin{frame}{Light Theory}
+  % Lighting algorithms are numerical approximations
   % Note how this is computationally intensive -> need to resort to approximations
-\end{frame}
 
-\begin{frame}{Direct Lighting}
-  % use as example of how lighting works, some intuition on rendering equation
-  % should help to understand indirect lighting
-\end{frame}
+  \begin{figure}
+    \begin{tikzpicture}
+      \draw (2, 0) arc (0:180:2);
+      \draw (0, 0) ellipse (2cm and 0.5cm);
 
-\begin{frame}{Indirect Lighting}
-  % what is is, other approaches, general approaches?
+      \fill (0, 0) circle (0.05cm) node[below] (x) {$x$};
+
+      \draw[->] (0, 0) -- (30:3cm) node[above right] {$\bm{v}$};
+      \draw[->] (0, 0) -- (90:3cm) node[above] {$\bm{n}$};
+      \draw[->] (0, 0) -- (120:3cm) node[above left] {$\bm{l_{direct}}$};
+      \draw[->] (0, 0) -- (150:3cm) node[above left] {$\bm{l_{indirect}}$};
+
+      \path (30:5cm) coordinate (camera);
+      \fill (camera) circle (0.1cm) node[above] {Camera};
+
+      \path (120:5cm) coordinate (light);
+      \fill (light) circle (0.1cm) node[above] {Light Source};
+
+      \path (150:5.8) coordinate (bounce);
+      \fill (-6, 0) rectangle (-5, 4);
+      \path (bounce) circle (0.1cm);
+      \draw[dashed, ->] (light) -- (bounce);
+      \foreach \angle in {60, 30, 0, -30, -60} {
+        \draw[dashed, ->] (bounce) -- +(\angle:0.5cm);
+      }
+    \end{tikzpicture}
+  \end{figure}
+
+  % TODO rendering equation?
 \end{frame}
 
 % raytracing and raymarching? maybe one slide
@@ -367,6 +401,8 @@
 % most important bits: voxels represent 3d data well and thus voxelization is important; vpls are core part of most gi algorithms; lpv and vct use regular grid
 
 \begin{frame}{What am I doing?} % this is the research question
+  % common theme is constructing some (ideally 3D) representation of a scene
+  % we wanted to evaluate an alternate method of voxelization and to see if nonuniform voxel sizes were a promising alternative to existing 3D data structures
   \begin{enumerate}
     \item Comparing two approaches for scene voxelization % voxelization is a core part of the algorithm; tessellated version also not restricted to rasterizer
     \item Investigating continuous voxel sizes % voxel warping; idea is to support bigger scenes and increase resolution near camera without abrupt changes in voxel density
@@ -419,12 +455,45 @@
   \end{figure}
 \end{frame}
 
+\begin{frame}{Conservative Rasterization}
+  % Of particular importance with the rasterization approach is the need for conservative rasterization. In general, a fragment is only generated for a triangle if that triangle overlaps the center of the fragment (pixel). This can cause undesirable cracks and holes in the voxelization. Conservative rasterization is meant to address this by generating a fragment for even partially overlapped fragments.
+
+  \begin{figure}
+    \begin{subfigure}[t]{0.4\textwidth}
+      \includegraphics[width=\textwidth]{conservativeraster_off}
+      \caption*{Off}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.4\textwidth}
+      \includegraphics[width=\textwidth]{conservativeraster_on}
+      \caption*{On}
+    \end{subfigure}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Conservative Rasterization}
+  % Here is a comparison between no conservative rasterization and with. We use an MSAA based method (a good compromise between simplicity, quality, and it's cross vendor)
+
+  \Wider{\begin{figure}
+    \begin{subfigure}[t]{0.45\textwidth}
+      \includegraphics[width=\textwidth]{voxels_off}
+      \caption*{Off}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.45\textwidth}
+      \includegraphics[width=\textwidth]{voxels_msaa}
+      \caption*{On}
+    \end{subfigure}
+  \end{figure}}
+\end{frame}
+
 \begin{frame}{Voxelization with Tessellator}
   Idea: Generate a \textit{vertex} for each voxel instead of a fragment
 
   % Tessellation after vertex shading and before fragment shading
   % rasterizer is not needed (is disabled)
-  % don't need to worry about dominant axis or conservative rasterization
+
+  % Tessellation is a method of programmatically subdividing input primitives (in our case triangles).
 
   \begin{figure}
     \includegraphics[scale=0.8]{openglwiki_tesselation.png}
@@ -436,10 +505,21 @@
 
   Inner level determined from maximum triangle altitude length
 
-  % TODO triangle overlaid on grid with tessellated points?
+  % Here is an illustration of the idea behind tessellated voxelization. By subdividing the edges and inside appropriately we can get a fairly good voxelization. A nice part of this voxelization is we don't need to worry about the dominant axis or conservative rasterization.
+  \begin{figure}
+    \begin{tikzpicture}[scale=0.8]
+      \draw [gray, step=1.0] (-4, -4) grid ++(8, 8);
+      \foreach \x/\y in {-3.1/-0.2, -2.23/-0.7, -1.37/-1.2, -0.5/-1.7, 0.25/-0.65, 1.0/0.4, 1.75/1.45, 2.5/2.5, 1.57/2.05, 0.63/1.6, -0.3/1.15, -1.23/0.7, -2.17/0.25, -1.31/-0.28, -0.19/0.26, -0.69/-0.58}{
+        \fill[thick, black] (\x, \y) circle (0.1cm);
+      }
+      \draw [black] (-3.1, -0.2) -- (2.5, 2.5) -- (-0.5, -1.7) -- cycle;
+      \draw [black] (-1.31, -0.28) -- (-0.19, 0.26) -- (-0.69, -0.58) -- cycle;
+    \end{tikzpicture}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Voxelized Scene}
+  % Opacity, color, and normals are stored in voxel textures. Since multiple shader invocations can write to the same voxel we need to use atomic operations. Both an atomic max and atomic average are supported.
   \begin{figure}
     \includegraphics[width=\textwidth]{voxels_msaa}
   \end{figure}
@@ -508,6 +588,8 @@
 \end{frame}
 
 \subsection{Final Shading}
+
+% TODO remove?
 \begin{frame}{Depth Prepass}
   An optimization to minimize the number of shaded fragments.
 
@@ -517,12 +599,18 @@
 \begin{frame}{Final Shading}
   % outline (direct + diffuse indirect + specular indirect)
   % inputs are lights, material, and fragment (with position, normal, texture coordinates)
+  % Indirect lighting is the only interesting (non-standard) one here
+  \begin{description}
+    \item[Direct Lighting] sum light contributions using Cook-Torrance shading model
+    \item[Indirect Lighting] voxel cone tracing
+    \item[Post Processing] tone mapping and gamma correction
+  \end{description}
 \end{frame}
 
-\begin{frame}{Direct Lighting}
-  % cook torrance too?
-  % don't forget shadows
-\end{frame}
+% \begin{frame}{Direct Lighting}
+%   % cook torrance too?
+%   % don't forget shadows
+% \end{frame}
 
 \begin{frame}{Indirect Lighting}
 % explain voxel cone tracing
@@ -531,6 +619,7 @@
 
 \subsection{Voxel Warping}
 \begin{frame}{Voxel Warping}
+  % TODO picture of linear on one side and warped on other with guidelines (just do cubic) and show warp slope and voxels
 \end{frame}
 
 
@@ -578,8 +667,15 @@
 
 \begin{frame}{Future Work}
   % other ways of adjusting resolution are more feasible due to temporal artifacts
-  % spherical harmonics, directional filtering
-  % grab bag of other optimizations related to voxel cone tracing
+
+  % Follow ups for voxelization and voxel warping, then general improvements
+
+  \begin{itemize}
+    \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
+    \item Spherical voxels to reduce temporal flickering with perspective warping % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
+    % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
+    \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality % miscellaneous improvements and optimizations
+  \end{itemize}
 \end{frame}
 
 \begin{frame}{}
