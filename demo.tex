@@ -252,13 +252,13 @@
   % just want to introduce the concept since I'll mention them in implementation
 \end{frame}
 
-\begin{frame}{Tessellation}
-  % briefly go over triangle tessellation and where it fits in the pipeline. will probably talk about it more in implementation
+% \begin{frame}{Tessellation}
+%   % briefly go over triangle tessellation and where it fits in the pipeline. will probably talk about it more in implementation
 
-  \begin{figure}
-    \includegraphics[height=\textheight]{openglwiki_tesselation.png}
-  \end{figure}
-\end{frame}
+%   \begin{figure}
+%     \includegraphics[height=\textheight]{openglwiki_tesselation.png}
+%   \end{figure}
+% \end{frame}
 
 \begin{frame}{Spatial Data Structures}
   % quickly go through one slide each (with picture)
@@ -420,6 +420,29 @@
 \end{frame}
 
 \begin{frame}{Voxelization with Tessellator}
+  Idea: Generate a \textit{vertex} for each voxel instead of a fragment
+
+  % Tessellation after vertex shading and before fragment shading
+  % rasterizer is not needed (is disabled)
+  % don't need to worry about dominant axis or conservative rasterization
+
+  \begin{figure}
+    \includegraphics[scale=0.8]{openglwiki_tesselation.png}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Determining Tessellation Levels}
+  Outer levels determined from respective edge lengths
+
+  Inner level determined from maximum triangle altitude length
+
+  % TODO triangle overlaid on grid with tessellated points?
+\end{frame}
+
+\begin{frame}{Voxelized Scene}
+  \begin{figure}
+    \includegraphics[width=\textwidth]{voxels_msaa}
+  \end{figure}
 \end{frame}
 
 \subsection{Radiance Injection and Filtering}
