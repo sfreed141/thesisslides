@@ -15,6 +15,7 @@
 \usepackage{tikz}
 \usepackage{bm}
 \usepackage{pgfplots}
+\usepackage{algorithm,algpseudocode} % https://tex.stackexchange.com/a/230789
 
 \graphicspath{ {figures/} }
 
@@ -631,6 +632,16 @@
 
 \begin{frame}{Direct Lighting}
   % psuedocode? or just picture of direct light and explain?
+  \begin{algorithm}[H]
+    \begin{algorithmic}
+      \State {color = 0}
+      \For {each light in the scene}
+        \If {not in shadow}
+          \State {color += computeLighting()}
+        \EndIf
+      \EndFor
+    \end{algorithmic}
+  \end{algorithm}
 \end{frame}
 
 \begin{frame}{Indirect Lighting}
@@ -648,9 +659,20 @@
     \includegraphics<+>[width=\textwidth]{conetrace3}
     \includegraphics<+>[width=\textwidth]{conetrace4}
     \includegraphics<+>[width=\textwidth]{conetrace5}
-    \includegraphics<+>[width=\textwidth]{debugIndirect_noOcclusion}
-    \includegraphics<+>[width=\textwidth]{debugReflections}
-    \includegraphics<+>[width=\textwidth]{debugOcclusion}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Indirect Lighting}
+  \begin{figure}
+    \includegraphics<1>[width=\textwidth]{debugIndirect_noOcclusion}
+    \includegraphics<2>[width=\textwidth]{debugReflections}
+    \includegraphics<3>[width=\textwidth]{debugOcclusion}
+    % TODO combined total indirect lighting
+    \caption*{
+      \only<1>{Diffuse Indirect (no occlusion)}
+      \only<2>{Specular Indirect}
+      \only<3>{\\Occlusion} % note this is voxel based ambient occlusion
+    }
   \end{figure}
 \end{frame}
 
@@ -751,6 +773,11 @@
 {\setbeamertemplate{frame footer}{*Find the source here: \url{github.com/sfreed141/vct}}
 \begin{frame}{Conclusion}
   % wrap up and list contributions again
+  \begin{itemize}
+    \item Real-time implementation of global illumination using voxel cone tracing
+    \item Implementation and comparison of two voxelization methods
+    \item Investigation into warped (nonuniform) voxels
+  \end{itemize}
 \end{frame}}
 
 \begin{frame}{Future Work}
