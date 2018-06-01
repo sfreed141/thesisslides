@@ -71,6 +71,7 @@
 % who i am, thanks for coming, blah blah
 
 % what is global illumination and why important
+% hopefully after this everyone will have an idea of how to do this themselves :)
 % show AO and baked? or at least talk about it and show pictures
 % we want FULL GI
   \begin{block}{Computer Graphics}
@@ -664,7 +665,8 @@
 % \begin{frame}{Test Setup}
 % \end{frame}
 
-% First, and most important, test was to measure the general performance of the algorithm. We also varied the voxel grid resolution and screen resolution to see how it affected performance. Thankfully we meet the 60fps goal for all tested resolutions!
+% First, and most important, test was to measure the general performance of the algorithm. We also varied the voxel grid resolution and screen resolution to see how it affected performance. Here are some screenshots of the varying voxel grid dimensions, starting at 64x64x64
+
 \begin{frame}{Performance}
   \begin{figure}
     \includegraphics<1>[width=\textwidth]{results_720_64}
@@ -681,6 +683,8 @@
   % analysis (which render passes were affected by what, etc)
 \end{frame}
 
+% And here we have the timing information. Each bar is for a given screen resolution and voxel grid resolution and shows the individual contributions of each render pass. For the typical 60fps goal for real-time (which is about 17ms) you see we meet the 60fps goal for all tested resolutions!
+% Then talk about individual contributions (constant, varies with screen, varies with grid, with both)
 \begin{frame}{Performance}
   \begin{figure}
     \pgfplotstableread[row sep=\\]{
@@ -711,7 +715,7 @@
   \end{figure}
 \end{frame}
 
-% Next we compared the results of the two voxelization algorithms. Visually, they are practically indistiguishable. Performance-wise the rasterization based approach was slightly faster. We might be able to close the gap with more optimizations. One benefit of the tessellated voxelization is the transformed points are not restricted to the viewport resolution.
+% Next we compared the results of the two voxelization algorithms. Visually, they are practically indistiguishable.
 \begin{frame}{Rasterized vs. Tessellated Voxels}
   \begin{figure}
       \includegraphics<1>[width=\textwidth]{results_voxelraster}
@@ -720,6 +724,7 @@
   \end{figure}
 \end{frame}
 
+% Performance-wise the rasterization based approach was slightly faster. We might be able to close the gap with more optimizations. One benefit of the tessellated voxelization is the transformed points are not restricted to the viewport resolution. It also had a really convenient way to debug since we could add on a geometry and fragment shader to see where the vertices were. Also, it helped out with the voxel warping since we didn't have to worry about the viewport resolution (which controls the granularity of the fragment positions).
 \begin{frame}{Rasterized vs. Tessellated Voxels}
   \begin{figure}
     \pgfplotstableread[row sep=\\]{
@@ -761,12 +766,10 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{}
-  \begin{center}
-    \LARGE Thank you!
-    \vspace{2cm}
-    \LARGE Questions?
-  \end{center}
+\begin{frame}[standout]
+  \LARGE Thank you!\\
+  \vspace{1cm}
+  \LARGE Questions?
 \end{frame}
 
 % TODO bibliography slides?
