@@ -1,13 +1,10 @@
 \documentclass[10pt]{beamer}
 
-\usetheme[progressbar=frametitle]{metropolis}
+\usetheme[progressbar=frametitle,block=fill]{metropolis}
 \usepackage{appendixnumberbeamer}
 
 \usepackage{booktabs}
 \usepackage[scale=2]{ccicons}
-
-\usepackage{pgfplots}
-\usepgfplotslibrary{dateplot}
 
 \usepackage{xspace}
 \newcommand{\themename}{\textbf{\textsc{metropolis}}\xspace}
@@ -47,6 +44,17 @@
 \begin{document}
 
 \frame{\titlepage}
+
+
+% OVERALL GUIDELINES (from Christian)
+% you are _teaching_: try to explain in simple but not condescending terms
+% do not make it sound too complicated: no one wants a know-it-all speaker
+% mistakes will happen, laugh them off and don't be too hard on yourself
+% move around and point things out in images
+% don't rush and be careful of presentation fatigue
+% pseudocode should be extremely brief (6 lines max); any algorithm should be explainable in ~4 sentences
+% BE CONFIDENT
+
 
 % Go over outlines of presentation. Mention the subsections briefly as appropriate.
 \begin{frame}{Outline}
@@ -138,14 +146,14 @@
 \subsection{Computer Graphics}
 \begin{frame}{Computer Graphics Primer}
   \begin{block}{Goal}
-    Given a virtual description of a scene render an image.
+    Given a virtual description of a scene, render an image.
   \end{block}
 
   \begin{block}{Big Issues}
     \begin{enumerate}
       \item How do we represent a scene? What information is required?  % geometry (triangles, voxels), materials (colors, properties), lights (type, position, color, direction), etc.
       \item How is a 3D scene represented as a 2D image?  % implies some transformation needed
-      \item How do we `render'---how is the final pixel color computed? % lighting/shading model; this is the focus of this thesis
+      \item How do we render---how is the final pixel color computed? % lighting/shading model; this is the focus of this thesis
     \end{enumerate}
   \end{block}
   % rtr objects -> world space -> screen space
@@ -272,44 +280,12 @@
 %   \end{figure}
 % \end{frame}
 
-\begin{frame}{Spatial Data Structures}
-  % quickly go through one slide each (with picture)
-  \begin{description}
-    \item<1>[Uniform Texture] each cell is the same size  % simple, hw filtering; wasteful
-    \item<2>[Cascaded Texture/Clipmap] nested textures with varying cell sizes % there is difference but not important for us; cell sizes are discrete multiplies, still wasteful but better, need to handle edges properly
-    \item<3>[Octree] adaptive tree structure which holds values in leaves % sparse, difficult on gpu to build and traverse, no hw filtering
-  \end{description}
-
-  \begin{figure}
-    % TODO TODO TODO \includegraphics<+>[width=\textwidth]{}
-    \only<1>{\begin{tikzpicture}[scale=0.8]
-      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
-    \end{tikzpicture}}
-    % \includegraphics<+>[width=\textwidth]{geometry_clipmap.jpg}
-    \only<2>{\begin{tikzpicture}[scale=0.8]
-      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
-      \draw [black, step=0.5] (-2, -2) grid ++(4, 4);
-      \draw [black, step=0.25] (-1, -1) grid ++(2, 2);
-    \end{tikzpicture}}
-    % \includegraphics<3>[width=\textwidth]{octree.png}
-    \only<3>{\begin{tikzpicture}[scale=0.8]
-      \draw [black, step=4.0] (-4, -4) grid ++(8, 8);
-      \draw [black, step=2.0] (0, 0) grid ++(4, 4);
-      \draw [black, step=1.0] (2, 2) grid ++(2, 2);
-      \draw [black, step=1.0] (2, 0) grid ++(2, 2);
-      \draw [black, step=0.5] (2, 1) grid ++(1, 2);
-      \draw [black, step=0.25] (2, 1.5) grid ++(1, 1);
-    \end{tikzpicture}}
-  \end{figure}
-\end{frame}
-
 \subsection{Lighting}
-\begin{frame}{How do we `render'?}
+\begin{frame}{How do we render?}
   % We need a shading model: a way to compute a color from the geometry, lights, and materials we have in the scene for a particular point
   % Makes sense to model this based on the real-world sooo
   \begin{figure}
-    \includegraphics<+>[width=\textwidth]{lighting}
-    \includegraphics<+>[width=\textwidth]{indirectlighting}
+    \includegraphics[width=\textwidth]{indirectlighting}
   \end{figure}
 \end{frame}
 
@@ -348,6 +324,47 @@
   % TODO rendering equation?
 \end{frame}
 
+\begin{frame}{Global Illumination}
+  Most algorithms follow a few main steps:
+
+  \begin{enumerate}
+    \item Construct representation of the scene
+    \item Derive indirect lighting information from representation
+    \item Collect indirect lighting when rendering
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Spatial Data Structures}
+  % quickly go through one slide each (with picture)
+  \begin{description}
+    \item<1>[Uniform Texture] each cell is the same size  % simple, hw filtering; wasteful
+    \item<2>[Cascaded Texture/Clipmap] nested textures with varying cell sizes % there is difference but not important for us; cell sizes are discrete multiplies, still wasteful but better, need to handle edges properly
+    \item<3>[Octree] adaptive tree structure which holds values in leaves % sparse, difficult on gpu to build and traverse, no hw filtering
+  \end{description}
+
+  \begin{figure}
+    % TODO TODO TODO \includegraphics<+>[width=\textwidth]{}
+    \only<1>{\begin{tikzpicture}[scale=0.8]
+      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
+    \end{tikzpicture}}
+    % \includegraphics<+>[width=\textwidth]{geometry_clipmap.jpg}
+    \only<2>{\begin{tikzpicture}[scale=0.8]
+      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
+      \draw [black, step=0.5] (-2, -2) grid ++(4, 4);
+      \draw [black, step=0.25] (-1, -1) grid ++(2, 2);
+    \end{tikzpicture}}
+    % \includegraphics<3>[width=\textwidth]{octree.png}
+    \only<3>{\begin{tikzpicture}[scale=0.8]
+      \draw [black, step=4.0] (-4, -4) grid ++(8, 8);
+      \draw [black, step=2.0] (0, 0) grid ++(4, 4);
+      \draw [black, step=1.0] (2, 2) grid ++(2, 2);
+      \draw [black, step=1.0] (2, 0) grid ++(2, 2);
+      \draw [black, step=0.5] (2, 1) grid ++(1, 2);
+      \draw [black, step=0.25] (2, 1.5) grid ++(1, 1);
+    \end{tikzpicture}}
+  \end{figure}
+\end{frame}
+
 % raytracing and raymarching? maybe one slide
 
 % ask for any questions or clarification here? (after related work too maybe?)
@@ -370,6 +387,7 @@
   % another slide for pros/cons?
 \end{frame}
 
+% LPVs and VCT after implementation? doesn't really help as background info
 \subsection{Light Propagation Volumes}
 \begin{frame}{Light Propagation Volumes}
   % low frequency but fairly stable, no occlusion (limited info from reusing), cascaded
@@ -693,7 +711,7 @@
 
   \begin{itemize}
     \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
-    \item Spherical voxels to reduce temporal flickering with perspective warping % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
+    \item Take advantage of tessellated voxelization to evenly distribute vertices for warped voxels % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
     % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
     \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality % miscellaneous improvements and optimizations
   \end{itemize}
@@ -702,219 +720,11 @@
 \begin{frame}{}
   \begin{center}
     \LARGE Thank you!
-  \end{center}
-\end{frame}
-
-\begin{frame}{}
-  \begin{center}
+    \vspace{2cm}
     \LARGE Questions?
   \end{center}
 \end{frame}
 
 % TODO bibliography slides?
-
-\section{Elements}
-
-\begin{frame}[fragile]{Typography}
-      \begin{verbatim}The theme provides sensible defaults to
-\emph{emphasize} text, \alert{accent} parts
-or show \textbf{bold} results.\end{verbatim}
-
-  \begin{center}becomes\end{center}
-
-  The theme provides sensible defaults to \emph{emphasize} text,
-  \alert{accent} parts or show \textbf{bold} results.
-\end{frame}
-
-\begin{frame}{Font feature test}
-  \begin{itemize}
-    \item Regular
-    \item \textit{Italic}
-    \item \textsc{SmallCaps}
-    \item \textbf{Bold}
-    \item \textbf{\textit{Bold Italic}}
-    \item \textbf{\textsc{Bold SmallCaps}}
-    \item \texttt{Monospace}
-    \item \texttt{\textit{Monospace Italic}}
-    \item \texttt{\textbf{Monospace Bold}}
-    \item \texttt{\textbf{\textit{Monospace Bold Italic}}}
-  \end{itemize}
-\end{frame}
-
-\begin{frame}{Lists}
-  \begin{columns}[T,onlytextwidth]
-    \column{0.33\textwidth}
-      Items
-      \begin{itemize}
-        \item Milk \item Eggs \item Potatos
-      \end{itemize}
-
-    \column{0.33\textwidth}
-      Enumerations
-      \begin{enumerate}
-        \item First, \item Second and \item Last.
-      \end{enumerate}
-
-    \column{0.33\textwidth}
-      Descriptions
-      \begin{description}
-        \item[PowerPoint] Meeh. \item[Beamer] Yeeeha.
-      \end{description}
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Figures}
-  \begin{figure}
-    \newcounter{density}
-    \setcounter{density}{20}
-    \begin{tikzpicture}
-      \def\couleur{alerted text.fg}
-      \path[coordinate] (0,0)  coordinate(A)
-                  ++( 90:5cm) coordinate(B)
-                  ++(0:5cm) coordinate(C)
-                  ++(-90:5cm) coordinate(D);
-      \draw[fill=\couleur!\thedensity] (A) -- (B) -- (C) --(D) -- cycle;
-      \foreach \x in {1,...,40}{%
-          \pgfmathsetcounter{density}{\thedensity+20}
-          \setcounter{density}{\thedensity}
-          \path[coordinate] coordinate(X) at (A){};
-          \path[coordinate] (A) -- (B) coordinate[pos=.10](A)
-                              -- (C) coordinate[pos=.10](B)
-                              -- (D) coordinate[pos=.10](C)
-                              -- (X) coordinate[pos=.10](D);
-          \draw[fill=\couleur!\thedensity] (A)--(B)--(C)-- (D) -- cycle;
-      }
-    \end{tikzpicture}
-    \caption{Rotated square from
-    \href{http://www.texample.net/tikz/examples/rotated-polygons/}{texample.net}.}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Tables}
-  \begin{table}
-    \caption{Largest cities in the world (source: Wikipedia)}
-    \begin{tabular}{lr}
-      \toprule
-      City & Population\\
-      \midrule
-      Mexico City & 20,116,842\\
-      Shanghai & 19,210,000\\
-      Peking & 15,796,450\\
-      Istanbul & 14,160,467\\
-      \bottomrule
-    \end{tabular}
-  \end{table}
-\end{frame}
-
-\begin{frame}{Blocks}
-  Three different block environments are pre-defined and may be styled with an
-  optional background color.
-
-  \begin{columns}[T,onlytextwidth]
-    \column{0.5\textwidth}
-      \begin{block}{Default}
-        Block content.
-      \end{block}
-
-      \begin{alertblock}{Alert}
-        Block content.
-      \end{alertblock}
-
-      \begin{exampleblock}{Example}
-        Block content.
-      \end{exampleblock}
-
-    \column{0.5\textwidth}
-
-      \metroset{block=fill}
-
-      \begin{block}{Default}
-        Block content.
-      \end{block}
-
-      \begin{alertblock}{Alert}
-        Block content.
-      \end{alertblock}
-
-      \begin{exampleblock}{Example}
-        Block content.
-      \end{exampleblock}
-
-  \end{columns}
-\end{frame}
-
-\begin{frame}{Math}
-  \begin{equation*}
-    e = \lim_{n\to \infty} \left(1 + \frac{1}{n}\right)^n
-  \end{equation*}
-\end{frame}
-\begin{frame}{Line plots}
-  \begin{figure}
-    \begin{tikzpicture}
-      \begin{axis}[
-        mlineplot,
-        width=0.9\textwidth,
-        height=6cm,
-      ]
-
-        \addplot {sin(deg(x))};
-        \addplot+[samples=100] {sin(deg(2*x))};
-
-      \end{axis}
-    \end{tikzpicture}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Bar charts}
-  \begin{figure}
-    \begin{tikzpicture}
-      \begin{axis}[
-        mbarplot,
-        xlabel={Foo},
-        ylabel={Bar},
-        width=0.9\textwidth,
-        height=6cm,
-      ]
-
-      \addplot plot coordinates {(1, 20) (2, 25) (3, 22.4) (4, 12.4)};
-      \addplot plot coordinates {(1, 18) (2, 24) (3, 23.5) (4, 13.2)};
-      \addplot plot coordinates {(1, 10) (2, 19) (3, 25) (4, 15.2)};
-
-      \legend{lorem, ipsum, dolor}
-
-      \end{axis}
-    \end{tikzpicture}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Quotes}
-  \begin{quote}
-    Veni, Vidi, Vici
-  \end{quote}
-\end{frame}
-
-\begin{frame}{References}
-  Some references to showcase [allowframebreaks] \cite{knuth92,ConcreteMath,Simpson,Er01,greenwade93}
-\end{frame}
-
-\appendix
-
-\begin{frame}[fragile]{Backup slides}
-  Sometimes, it is useful to add slides at the end of your presentation to
-  refer to during audience questions.
-
-  The best way to do this is to include the \verb|appendixnumberbeamer|
-  package in your preamble and call \verb|\appendix| before your backup slides.
-
-  \themename will automatically turn off slide numbering and progress bars for
-  slides in the appendix.
-\end{frame}
-
-\begin{frame}[allowframebreaks]{References}
-
-  \bibliography{demo}
-  \bibliographystyle{abbrv}
-
-\end{frame}
 
 \end{document}
