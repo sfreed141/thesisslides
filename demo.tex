@@ -14,6 +14,7 @@
 \usepackage{subcaption}
 \usepackage{tikz}
 \usepackage{bm}
+\usepackage{pgfplots}
 
 \graphicspath{ {figures/} }
 
@@ -680,6 +681,36 @@
   % analysis (which render passes were affected by what, etc)
 \end{frame}
 
+\begin{frame}{Performance}
+  \begin{figure}
+    \pgfplotstableread[row sep=\\]{
+      Resolution Voxelize Shadowmap Inject Filter Prepass Shading\\
+      720p64 0.90  0.69  0.92  0.04  0.20  3.89\\
+      720p128 1.13  0.69  0.92  0.10  0.20  4.81\\
+      720p256 2.40  0.69  0.93  0.55  0.20  5.32\\
+      900p64 0.70  0.69  0.92  0.05  0.25  5.98\\
+      900p128 1.12  0.69  0.92  0.10  0.26  6.42\\
+      900p256 2.39  0.69  0.93  0.56  0.25  7.10\\
+      1080p64 0.72  0.68  0.92  0.04  0.31  8.28\\
+      1080p128 1.15  0.68  0.92  0.10  0.31  9.40\\
+      1080p256 2.41  0.69  0.93  0.55  0.36  9.75\\
+    }\dataset
+    \begin{tikzpicture}[scale=0.9]
+      \begin{axis}[nodes near coords ybar stacked configuration/.style={},ybar stacked, symbolic x coords={720p64, 720p128, 720p256, 900p64, 900p128, 900p256, 1080p64, 1080p128, 1080p256}, xtick=data, xticklabel style={rotate=45}, legend style={at={(1.05,0.5)}, anchor=west}, xlabel={Screen Resolution x Voxel Grid Size}, ylabel={Time (ms)}, enlarge y limits={0.2, upper}, title={Frame Times}, ymin=0]
+        \addplot table[meta=Resolution, y=Voxelize] \dataset;
+        \addplot table[meta=Resolution, y=Shadowmap] \dataset;
+        \addplot table[meta=Resolution, y=Inject] \dataset;
+        \addplot table[meta=Resolution, y=Filter] \dataset;
+        \addplot table[meta=Resolution, y=Prepass] \dataset;
+        \addplot[point meta=y, nodes near coords, nodes near coords align={above}, nodes near coords style={/pgf/number format/.cd, fixed zerofill, precision=1}] table[meta=Resolution, y=Shading] \dataset;
+
+        \legend{Voxelize, Shadowmap, Radiance Injection, Radiance Filtering, Depth Prepass, Final Shading}
+        % TODO try to get nested xticklabel
+      \end{axis}
+    \end{tikzpicture}
+  \end{figure}
+\end{frame}
+
 % Next we compared the results of the two voxelization algorithms. Visually, they are practically indistiguishable. Performance-wise the rasterization based approach was slightly faster. We might be able to close the gap with more optimizations. One benefit of the tessellated voxelization is the transformed points are not restricted to the viewport resolution.
 \begin{frame}{Rasterized vs. Tessellated Voxels}
   \begin{figure}
@@ -690,9 +721,22 @@
 \end{frame}
 
 \begin{frame}{Rasterized vs. Tessellated Voxels}
-  TODO table + graph
+  \begin{figure}
+    \pgfplotstableread[row sep=\\]{
+      Resolution Rasterized Tessellated\\
+      64         0.53       0.70\\
+      128        0.85       1.12\\
+      256        1.91       2.35\\
+    }\dataset
+    \begin{tikzpicture}[scale=0.9]
+      \begin{axis}[ybar=5pt, symbolic x coords={64,128,256}, xtick=data, legend style={at={(1.05,0.5)}, anchor=west}, xlabel={Voxel Grid Size}, ylabel={Time (ms)}, enlarge y limits={0.2, upper}, enlarge x limits={0.2}, title={Voxelization Time},nodes near coords, nodes near coords align={above}, nodes near coords style={/pgf/number format/fixed}, ymin=0]
+        \addplot table[meta=Resolution, y=Rasterized] \dataset;
+        \addplot table[meta=Resolution, y=Tessellated] \dataset;
 
-  % TODO have on their own slides too?
+        \legend{Rasterized, Tessellated}
+      \end{axis}
+    \end{tikzpicture}
+  \end{figure}
 \end{frame}
 
 % Lastly we evaluated our voxel warping...
