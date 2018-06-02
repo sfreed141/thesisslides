@@ -456,7 +456,7 @@
           \item Voxelize Scene
           \item Inject Radiance
           \item Filter Radiance
-          \item Depth Prepass
+          % \item Depth Prepass
           \item Shading
         \end{enumerate}
       \end{block}
@@ -608,6 +608,8 @@
   \end{center}
 \end{frame}
 
+% the cracks are the result of imperfect voxelization (conservative rasterization)
+% also this is only showing the surface values, the empty space also contains semi-opaque colors
 \begin{frame}{Radiance Filtering}
   \begin{figure}
     \includegraphics<+>[width=\textwidth]{mipmap0.png}
@@ -621,11 +623,16 @@
 \subsection{Final Shading}
 
 % TODO remove?
-\begin{frame}{Depth Prepass}
-  An optimization to minimize the number of shaded fragments.
+% \begin{frame}{Depth Prepass}
+%   \begin{itemize}
+%     \item Shading (on each pixel) is expensive
+%     \item Use the depth buffer to ensure only the final pixels are shaded
+%   \end{itemize}
 
-  Prefill the depth buffer so lighting (including the relatively expensive voxel cone tracing) will only be performed on the visible fragments of the scene. % remind of depth test and this is only for forward rendering (deferred already does this when creating gbuffer)
-\end{frame}
+%   %An optimization to minimize the number of shaded fragments.
+
+%   %Prefill the depth buffer so lighting (including the relatively expensive voxel cone tracing) will only be performed on the visible fragments of the scene. % remind of depth test and this is only for forward rendering (deferred already does this when creating gbuffer)
+% \end{frame}
 
 \begin{frame}{Final Shading}
   % outline (direct + diffuse indirect + specular indirect)
@@ -653,23 +660,23 @@
 \end{frame}
 
 \begin{frame}{Indirect Lighting}
-  \begin{columns}
-    \begin{column}{0.5\textwidth}
+  % \begin{columns}
+  %   \begin{column}{0.5\textwidth}
       \begin{block}{Voxel Cone Tracing Idea}
         \begin{enumerate}
           \item Sample light from the radiance texture along a particular direction
           \item Adjust level of detail as we get farther from sample point
         \end{enumerate}
       \end{block}
-    \end{column}
+    % \end{column}
     % In other words, voxel cone tracing is really just raymarching but we change the level of detail as we go
 
-    \begin{column}{0.5\textwidth}
+    % \begin{column}{0.5\textwidth}
       \begin{figure}
-        \caption*{Test}
+        \includegraphics[height=0.5\textheight]{conetrace2}
       \end{figure}
-    \end{column}
-  \end{columns}
+  %   \end{column}
+  % \end{columns}
 \end{frame}
 
 \begin{frame}{Voxel Cone Tracing}
@@ -680,7 +687,9 @@
 
 % To approximate indirect lighting (recall that we are approximating a hemispherical surface integral) we use voxel cone tracing. The idea combines raytracing and mipmapping: we are raymarching through our filtered radiance values. The level to sample from is determined by the cone's diameter: at each step we increase the cone's height (also increasing the diameter)
 
-% Here we are determining the indirect light at the point on this yellow sphere here with surface normal n. At each step, we sample from a higher level corresponding to the cone's diameter. We use 5 cones to gather diffuse (low frequency) light and 1 cone for specular lights. The cone tracing also gives us occlusion information, which we use to attenuate the lighting.
+% Here we are determining the indirect light at the point on this yellow sphere here with surface normal n. At each step, we sample from a higher level corresponding to the cone's diameter. We also are keeping track of any occlusion information and use that to blend the sampled colors together. The cone tracing stops when either the cone is fully occluded or we reach a specified number of steps.
+
+% We use 5 cones to gather diffuse (low frequency) light and 1 cone for specular lights. The cone tracing also gives us occlusion information, which we use to attenuate the lighting.
   \begin{figure}
     \includegraphics<+>[width=\textwidth]{conetrace1}
     \includegraphics<+>[width=\textwidth]{conetrace2}
@@ -698,7 +707,7 @@
     % TODO combined total indirect lighting
     \caption*{
       \only<1>{Diffuse Indirect (no occlusion)}
-      \only<2>{Specular Indirect}
+      \only<2>{Specular Indirect (no occlusion)}
       \only<3>{\\Occlusion} % note this is voxel based ambient occlusion
     }
   \end{figure}
@@ -706,6 +715,15 @@
 
 \subsection{Voxel Warping}
 \begin{frame}{Voxel Warping}
+  \begin{itemize}
+    \item Voxels are usually restricted to discrete sizes % either one size or multiples of 2
+    \item What if the size is not restricted?
+      \begin{enumerate}
+        \item Vary with distance from camera
+        % \item Size determined from low resolution occupancy information
+        \item Vary based on perspective
+      \end{enumerate}
+  \end{itemize}
   % TODO picture of linear on one side and warped on other with guidelines (just do cubic) and show warp slope and voxels
 \end{frame}
 
@@ -825,7 +843,7 @@
   \begin{itemize}
     \item Real-time implementation of global illumination using voxel cone tracing
     \item Implementation and comparison of two voxelization methods
-    \item Investigation into warped (nonuniform) voxels
+    \item Investigation into warped voxels
   \end{itemize}
 \end{frame}}
 
