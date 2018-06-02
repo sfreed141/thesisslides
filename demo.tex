@@ -1,6 +1,6 @@
 \documentclass[10pt]{beamer}
 
-\usetheme[progressbar=frametitle,block=fill]{metropolis}
+\usetheme[block=fill]{metropolis}
 \usepackage{appendixnumberbeamer}
 
 \usepackage{booktabs}
@@ -38,8 +38,9 @@
 \AtBeginSection[]
 {
 	\begin{frame}
-    	\frametitle{Outline}
-        \tableofcontents[currentsection,hideothersubsections] % TODO show subsections/frames?
+      \frametitle{Outline}
+      \setbeamertemplate{section in toc}[sections numbered]
+        \tableofcontents[currentsection,hideothersubsections]
 	\end{frame}
 }
 
@@ -67,51 +68,33 @@
 \setbeamertemplate{frametitle continuation}{}
 
 \section{Introduction}
-
 \begin{frame}{Introduction}
 % who i am, thanks for coming, blah blah
 
 % what is global illumination and why important
 % hopefully after this everyone will have an idea of how to do this themselves :)
-% show AO and baked? or at least talk about it and show pictures
-% we want FULL GI
   \begin{block}{Computer Graphics}
-    How can we model light in a virtual world?
+    How can we simulate light in a virtual world?
 
-    Physically accurate lighting too complex for real-time---approximate!
+    Physically accurate lighting is too complex for real-time---approximate!
   \end{block}
 \end{frame}
 
-\begin{frame}{Computer Graphics}
-  % here we only have simple lighting. the ambient/indirect light is the difficult part to compute
-
-  % Want to go from this...to _this_
-  % \begin{columns}
-  %   \begin{column}{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[width=\textwidth]{gi_off.png}
-        :(
-      \end{figure}
-    \end{frame} \begin{frame}{Motivations}
-  %   \end{column}
-  %   \begin{column}{0.5\textwidth}
-      \begin{figure}
-        \includegraphics[width=\textwidth]{gi_on.png}
-        :)
-      \end{figure}
-  %   \end{column}
-  % \end{columns}
+% Want to go from this simple approximation...
+\begin{frame}{Motivations}
+  \begin{figure}
+    \includegraphics[width=\textwidth]{gi_off.png}
+    \caption*{:(}
+  \end{figure}
 \end{frame}
 
-\begin{frame}{Real-Time Global Illumination}
-  Various approaches to approximating indirect light.
-
-  \begin{description}
-    \item[Constant] Fixed fraction of ambient light % as seen in first image
-    \item[Partial] Ambient occlusion, shadows, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
-    \item[Static] Baked lighting, light probes
-    \item[Dynamic] Light Propagation Volumes, Voxel Cone Tracing
-  \end{description}
+% to something like _this_, with goodies like glossy reflection, color bleeding, and ambient occlusion
+% These effects are from approximating the indirect light in the scene: the light that doesn't come directly from a light source.
+\begin{frame}{Motivations}
+  \begin{figure}
+    \includegraphics[width=\textwidth]{gi_on.png}
+    \caption*{:)}
+  \end{figure}
 \end{frame}
 
 % \begin{frame}{Teaser}
@@ -126,9 +109,16 @@
 \subsection{Motivations}
 \begin{frame}{Motivations}
   \begin{enumerate}
-    \centering
-    \item Real-time global illumination is difficult % lots of computation
-    \item Limited reference material % open-source, cross-platform (-apple), no large engine, any documentation or explanation
+    % \centering
+    \item Real-time global illumination is difficult % lots of computation, most algorithms require a lot of parts so it's difficult to start from scratch (like most of us)
+      \begin{itemize}
+        \item Many steps and things to keep track of
+      \end{itemize}
+    \item Limited reference material
+        \begin{itemize}
+          \item Not much public code  % solutions developed in the industry or by researchers often aren't open source (e.g. vxgi is binary, code accompanying research papers not there or perhaps integrated into proprietary codebase)
+          \item Demo code or part of large engine % most is limited in scope or is tied to an engine, making it difficult to extend or integrate into your own project
+        \end{itemize}
     \pause
     \item It's cool % the real reason tbh
   \end{enumerate}
@@ -137,14 +127,15 @@
 \subsection{Contributions}
 \begin{frame}{Contributions}
   \begin{itemize}
-    \item Open-source, cross-platform implementation of global illumination using voxel cone tracing
-    \item Comparison between rasterization and tessellation based voxelization
-    \item Investigation into warped voxels % more on this later, first I'd like to give a crash course in graphics and an overview of other solutions to real time gi
+    \item Open-source, cross-platform implementation of real-time global illumination (using voxel cone tracing) % except for apple since they don't like opengl. the big goal here is for others to be able to work on it and do cool stuff (jaafer already used the vct part :) ). voxel cone tracing is the general technique used to achieve gi
+    \item Comparison two different methods of scene voxelization (rasterization vs.\ tessellation)% voxelization is an important part of many new gi algorithms so we wanted to compare two different methods
+    \item Investigation into warped (nonuniform size) voxels % more on this later, first I'd like to give a crash course in graphics and an overview of other solutions to real time gi
   \end{itemize}
 \end{frame}
 
-
 \section{Background}
+
+% Please stop me and ask for clarification or more info!
 
 \subsection{Computer Graphics}
 \begin{frame}{Computer Graphics Primer}
@@ -168,8 +159,8 @@
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \begin{itemize}[<+>]
-        \item Geometry: triangles, voxels % triangles inherently 2D->good for surfaces, not so much for volumetric data
-        \item Materials: colors and other properties % like roughness, normal maps (kinda)
+        \item Geometry: triangles, voxels % triangles inherently 2D->good for surfaces, not so much for volumetric data. recent gpu developments have made working with nontriangle data more viable, which is why the voxel representation is gaining popularity
+        \item Materials: colors and other properties % albedo + roughness, normal maps (kinda)
         \item Lights: positions, colors, etc.
       \end{itemize}
     \end{column}
@@ -229,13 +220,13 @@
     \includegraphics[width=\textwidth]{learnopengl_coordinate_systems.png}
   \end{figure}
 
-  \begin{description}[<+| only@+>]
-    \item[Local/Object Space] coordinate system relative to a single object
-    \item[World Space] a global coordinate system for the virtual world
-    \item[View Space] coordinates are with respect to the camera
-    \item[Clip Space/NDC] defines a frustum in which objects will be rasterized % those outside the frustum are clipped
-    \item[Screen Space] coordinates are the pixel position and a depth value
-  \end{description}
+  % \begin{description}[<+| only@+>]
+  %   \item[Local/Object Space] coordinate system relative to a single object
+  %   \item[World Space] a global coordinate system for the virtual world
+  %   \item[View Space] coordinates are with respect to the camera
+  %   \item[Clip Space/NDC] defines a frustum in which objects will be rasterized % those outside the frustum are clipped
+  %   \item[Screen Space] coordinates are the pixel position and a depth value
+  % \end{description}
 
   % Also other spaces, like texture space [0, 1], image space (integral coordinates),
 
@@ -294,7 +285,8 @@
 
 \begin{frame}{Light Theory}
   % Lighting algorithms are numerical approximations
-  % Note how this is computationally intensive -> need to resort to approximations
+  % The direct light is relatively straightforward to compute: for each point we can iterate through all the lights and sum their contributions
+  % Indirect light is the hard part, since the light can come from anywhere in the scene. To figure out all the light in the scene we'd have to test every possible direction in this hemisphere. Therefore we have to resort to approximations...
 
   \begin{figure}
     \begin{tikzpicture}
@@ -327,8 +319,25 @@
   % TODO rendering equation?
 \end{frame}
 
-\begin{frame}{Global Illumination}
-  Most algorithms follow a few main steps:
+% There are many different ways to achieve global illumination, often with very different goals and tradeoffs. Also, most complete lighting solutions combine multiple independent techniques or only selectively apply them in order to meet quality, time, and memory constraints.
+% The first approach to computing indirect light is essentially to not compute it and just use a constant factor. This is of course very fast but not accurate at all.
+% Next we have 'partial' global illumination approaches. While better, these methods don't attempt to fully simulate indirect lighting---they're hacks.
+% Static methods involve precomputing lighting prior to runtime. The lighting quality itself is often very accurate, but it doesn't handle dynamic, moving objects.
+% Lastly, we have the dynamic approaches. The entire algorithm is designed to fit inside a single frame so all dynamic objects have their light updated (of course there are tricks and speed this up). This is what we are interested in.
+\begin{frame}{Real-Time Global Illumination}
+  Various approaches to approximating indirect light.
+
+  \begin{description}
+    \item[Constant] Fixed fraction of ambient light % as seen in first image
+    \item[Partial] Ambient occlusion, soft shadows, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
+    \item[Static] Baked lighting, light probes
+    \item[Dynamic] Light Propagation Volumes, Voxel Cone Tracing
+  \end{description}
+\end{frame}
+
+% Most algorithms end up having the same main steps. The differences generally come from what the representation is (volumetric? screen space? is it complete or just local?) and how it's stored (if any special data structure is used). When doing the final gathering of the light there's often a clever way to sample the lighting to reduce computations.
+\begin{frame}{Real-Time Global Illumination}
+  Most global illumination algorithms follow a few main steps:
 
   \begin{enumerate}
     \item Construct representation of the scene
@@ -337,36 +346,36 @@
   \end{enumerate}
 \end{frame}
 
-\begin{frame}{Spatial Data Structures}
-  % quickly go through one slide each (with picture)
-  \begin{description}
-    \item<1>[Uniform Texture] each cell is the same size  % simple, hw filtering; wasteful
-    \item<2>[Cascaded Texture/Clipmap] nested textures with varying cell sizes % there is difference but not important for us; cell sizes are discrete multiplies, still wasteful but better, need to handle edges properly
-    \item<3>[Octree] adaptive tree structure which holds values in leaves % sparse, difficult on gpu to build and traverse, no hw filtering
-  \end{description}
+% \begin{frame}{Spatial Data Structures}
+%   % quickly go through one slide each (with picture)
+%   \begin{description}
+%     \item<1>[Uniform Texture] each cell is the same size  % simple, hw filtering; wasteful
+%     \item<2>[Cascaded Texture/Clipmap] nested textures with varying cell sizes % there is difference but not important for us; cell sizes are discrete multiplies, still wasteful but better, need to handle edges properly
+%     \item<3>[Octree] adaptive tree structure which holds values in leaves % sparse, difficult on gpu to build and traverse, no hw filtering
+%   \end{description}
 
-  \begin{figure}
-    % TODO TODO TODO \includegraphics<+>[width=\textwidth]{}
-    \only<1>{\begin{tikzpicture}[scale=0.8]
-      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
-    \end{tikzpicture}}
-    % \includegraphics<+>[width=\textwidth]{geometry_clipmap.jpg}
-    \only<2>{\begin{tikzpicture}[scale=0.8]
-      \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
-      \draw [black, step=0.5] (-2, -2) grid ++(4, 4);
-      \draw [black, step=0.25] (-1, -1) grid ++(2, 2);
-    \end{tikzpicture}}
-    % \includegraphics<3>[width=\textwidth]{octree.png}
-    \only<3>{\begin{tikzpicture}[scale=0.8]
-      \draw [black, step=4.0] (-4, -4) grid ++(8, 8);
-      \draw [black, step=2.0] (0, 0) grid ++(4, 4);
-      \draw [black, step=1.0] (2, 2) grid ++(2, 2);
-      \draw [black, step=1.0] (2, 0) grid ++(2, 2);
-      \draw [black, step=0.5] (2, 1) grid ++(1, 2);
-      \draw [black, step=0.25] (2, 1.5) grid ++(1, 1);
-    \end{tikzpicture}}
-  \end{figure}
-\end{frame}
+%   \begin{figure}
+%     % TODO TODO TODO \includegraphics<+>[width=\textwidth]{}
+%     \only<1>{\begin{tikzpicture}[scale=0.8]
+%       \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
+%     \end{tikzpicture}}
+%     % \includegraphics<+>[width=\textwidth]{geometry_clipmap.jpg}
+%     \only<2>{\begin{tikzpicture}[scale=0.8]
+%       \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
+%       \draw [black, step=0.5] (-2, -2) grid ++(4, 4);
+%       \draw [black, step=0.25] (-1, -1) grid ++(2, 2);
+%     \end{tikzpicture}}
+%     % \includegraphics<3>[width=\textwidth]{octree.png}
+%     \only<3>{\begin{tikzpicture}[scale=0.8]
+%       \draw [black, step=4.0] (-4, -4) grid ++(8, 8);
+%       \draw [black, step=2.0] (0, 0) grid ++(4, 4);
+%       \draw [black, step=1.0] (2, 2) grid ++(2, 2);
+%       \draw [black, step=1.0] (2, 0) grid ++(2, 2);
+%       \draw [black, step=0.5] (2, 1) grid ++(1, 2);
+%       \draw [black, step=0.25] (2, 1.5) grid ++(1, 1);
+%     \end{tikzpicture}}
+%   \end{figure}
+% \end{frame}
 
 % raytracing and raymarching? maybe one slide
 
@@ -468,10 +477,7 @@
 \subsection{Voxelization}
 \begin{frame}{Voxelization with Rasterizer}
   Each fragment corresponds to a voxel
-  % main idea: rasterized fragments correspond to voxel
-  % setup: need projection matrices
-  % geometry shader: choose dominant axis and project
-  % fragment shader:
+  % since fragments are inherently 2D, we use the depth value to recreate the 3D coordinates. Also, since the rasterization is in 2D, we have to make sure we view the triangle from the direction that'll maximize its 2D area. Once we have the fragment we can figure out its voxel position and write it in. Now for the conservative rasterization...
 
   \begin{figure}
     \includegraphics[width=\textwidth]{rasterizedvoxelization}
@@ -584,8 +590,13 @@
   \end{figure}
 \end{frame}
 
+% Now that we have a high resolution version of the light in the scene we want to smooth it out. This step is for mimicing how light should spread out and bounce around. The number of levels (the mipmaps) of filtered light is a configurable parameter and each level is half the size of the previous. To compute the next level we just average neighboring voxels.
 \begin{frame}{Radiance Filtering}
-  Radiance texture contains multiple \textbf{levels} (mipmaps). Each level is half the size of the previous. A compute shader performs a 2x2x2 box filter for each level to determine the filtered value.
+  \begin{itemize}
+    \item Multiple \textbf{levels} (mipmaps)
+    \item Each level is half the size of the previous
+    \item Computing the next level is a 2x2x2 average
+  \end{itemize}
 
   \begin{center}
     \begin{tikzpicture}
@@ -595,9 +606,6 @@
       \draw[step=2.0, black, ultra thick, xshift=5.0cm] (0, 0) grid (4, 4);
     \end{tikzpicture}
   \end{center}
-
-  % show 2D box filter
-  % show the four images
 \end{frame}
 
 \begin{frame}{Radiance Filtering}
@@ -645,6 +653,26 @@
 \end{frame}
 
 \begin{frame}{Indirect Lighting}
+  \begin{columns}
+    \begin{column}{0.5\textwidth}
+      \begin{block}{Voxel Cone Tracing Idea}
+        \begin{enumerate}
+          \item Sample light from the radiance texture along a particular direction
+          \item Adjust level of detail as we get farther from sample point
+        \end{enumerate}
+      \end{block}
+    \end{column}
+    % In other words, voxel cone tracing is really just raymarching but we change the level of detail as we go
+
+    \begin{column}{0.5\textwidth}
+      \begin{figure}
+        \caption*{Test}
+      \end{figure}
+    \end{column}
+  \end{columns}
+\end{frame}
+
+\begin{frame}{Voxel Cone Tracing}
 % explain voxel cone tracing
 % the idea (raymarching + mipmaps), choosing cone angles + dirs, diffuse indirect, specular indirect, cone tracing itself
 
@@ -768,6 +796,27 @@
 
 % Lastly we evaluated our voxel warping...
 \begin{frame}{Voxel Warping}
+  % TODO picture of linear on one side and warped on other with guidelines (just do cubic) and show warp slope and voxels
+  \begin{figure}
+    \includegraphics<1>[width=\textwidth]{voxelwarp_off}
+    \includegraphics<2>[width=\textwidth]{voxelwarp_on}
+    \caption*{
+      \only<1>{Without voxel warping}
+      \only<2>{\\With voxel warping}
+    }
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Perspective Voxel Warping}
+  % TODO picture of linear on one side and warped on other with guidelines (just do cubic) and show warp slope and voxels
+  \begin{figure}
+    \includegraphics<1>[width=\textwidth]{tesswarp_off}
+    \includegraphics<2>[width=\textwidth]{tesswarp_on}
+    \caption*{
+      \only<1>{Without voxel warping}
+      \only<2>{\\With voxel warping}
+    }
+  \end{figure}
 \end{frame}
 
 {\setbeamertemplate{frame footer}{*Find the source here: \url{github.com/sfreed141/vct}}
