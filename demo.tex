@@ -71,7 +71,7 @@
 \begin{frame}{Introduction}
 % who i am, thanks for coming, blah blah
 
-% what is global illumination and why important
+% what is global illumination and why important---more realistic, more immersive
 % hopefully after this everyone will have an idea of how to do this themselves :)
   \begin{block}{Computer Graphics}
     How can we simulate light in a virtual world?
@@ -234,16 +234,16 @@
 
 % \end{frame}
 
-% \begin{frame}{How is a 3D scene represented as a 2D image?}
-%   \begin{center}
-%     \huge\textbf{The Graphics Pipeline}
-%   \end{center}
-%   % This is the standard sequence of events that render the final image from our scene. For nonstandard stuff like voxelization these stages are often abused to increase performance.
-%   % We'll go over the entire pipeline for sake of completess
-%   \begin{figure}
-%     \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
-%   \end{figure}
-% \end{frame}
+\begin{frame}{How is a 3D scene represented as a 2D image?}
+  \begin{center}
+    \huge\textbf{The Graphics Pipeline}
+  \end{center}
+  % This is the standard sequence of events that render the final image from our scene. For nonstandard stuff like voxelization these stages are often abused to increase performance.
+  % We'll go over the entire pipeline for sake of completess
+  \begin{figure}
+    \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
+  \end{figure}
+\end{frame}
 
 % \begin{frame}{The Graphics Pipeline}
 %   \begin{figure}
@@ -343,7 +343,7 @@
 
   \begin{enumerate}
     \item Construct representation of the scene
-    \item Calculate lighting information
+    \item Calculate indirect lighting information
     \item Collect indirect lighting when rendering
   \end{enumerate}
 
@@ -453,13 +453,16 @@
 
   % Really what we have is a forward style rendering engine with support for rigid body animation, multiple lights, normal mapping, shadows, and of course global illumination
 
+  % Step 2 is creating our scene representation
+  % Steps 3, 4, and 5 are computing the indirect lighting information, which we call the radiance texture
+  % Step 6 is where we collect/sample the indirect lighting
   \begin{columns}
     \begin{column}{0.5\textwidth}
       \begin{block}{Main Steps}
         \begin{enumerate}
           \item Setup (load scene, create textures, compile shaders)
-          \item Create Shadowmap
           \item Voxelize Scene
+          \item Create Shadowmap
           \item Inject Radiance
           \item Filter Radiance
           % \item Depth Prepass
@@ -479,6 +482,16 @@
     \end{column}
   \end{columns}
 \end{frame}
+
+
+\AtBeginSubsection[]
+{
+	\begin{frame}
+      \frametitle{Outline}
+      % \setbeamertemplate{section in toc}[sections numbered]
+        \tableofcontents[currentsection,subsectionstyle=show/shaded/hide]
+	\end{frame}
+}
 
 \subsection{Voxelization}
 \begin{frame}{Voxelization with Rasterizer}
@@ -560,19 +573,19 @@
 \end{frame}
 
 \subsection{Radiance Injection and Filtering}
-\begin{frame}{Radiance Injection}
-  \begin{itemize}
-    \item Create virtual point lights for all geometry hit by the light.
-    \item These lights approximate a single-bounce of indirect lighting.
-  \end{itemize}
+% \begin{frame}{Radiance Injection}
+%   \begin{itemize}
+%     \item Create virtual point lights for all geometry hit by the light.
+%     \item These lights approximate a single-bounce of indirect lighting.
+%   \end{itemize}
 
-  \begin{figure}
-    \includegraphics[width=0.8\textwidth]{lightinjection}
-  \end{figure}
-\end{frame}
+%   \begin{figure}
+%     \includegraphics[width=0.8\textwidth]{lightinjection}
+%   \end{figure}
+% \end{frame}
 
 \begin{frame}{Radiance Injection---Shadow Mapping}
-  To determine where the virtual point lights should be, we use a \textbf{shadowmap}.
+  To determine where the virtual point lights (indirect light sources) should be, we use a \textbf{shadowmap}.
 
   Render the scene from the \textit{light}'s point of view.
 
@@ -604,7 +617,14 @@
   \end{itemize}
 
   \begin{center}
+    \definecolor{purple}{rgb}{1.0, 0.0, 1.0}
     \begin{tikzpicture}
+      \fill[red] (0, 0) rectangle (1, 1);
+      \fill[red] (1, 1) rectangle (2, 2);
+      \fill[blue] (1, 0) rectangle (2, 1);
+      \fill[blue] (0, 1) rectangle (1, 2);
+      \fill[{purple}] (5, 0) rectangle (7, 2);
+
       \draw[step=1.0, gray] (0, 0) grid (4, 4);
       \draw[step=2.0, black, ultra thick] (0, 0) grid (4, 4);
       \draw[black, ->, ultra thick] (4.25, 2) to (4.75, 2);
@@ -650,6 +670,7 @@
   \end{description}
 \end{frame}
 
+% Computing the direct lighting is fairly straightforward: we loop through each light and, if the light source isn't being blocked by anything, add the lighting contribution. This computeLighting is based on material properties, light color and intensity, and these vectors: the view vector, surface normal, and light vector.
 \begin{frame}{Direct Lighting}
   % psuedocode? or just picture of direct light and explain?
   \begin{algorithm}[H]
@@ -662,6 +683,32 @@
       \EndFor
     \end{algorithmic}
   \end{algorithm}
+
+  \begin{figure}
+    \begin{tikzpicture}[scale=0.7]
+      \draw (2, 0) arc (0:180:2);
+      \draw (0, 0) ellipse (2cm and 0.5cm);
+
+      \fill (0, 0) circle (0.05cm) node[below] (x) {$x$};
+
+      \draw[->] (0, 0) -- (30:3cm) node[above right] {$\bm{v}$};
+      \draw[->] (0, 0) -- (90:3cm) node[above] {$\bm{n}$};
+      \draw[->] (0, 0) -- (120:3cm) node[above left] {$\bm{l_{direct}}$};
+
+      \path (30:5cm) coordinate (camera);
+      \fill (camera) circle (0.1cm) node[above] {Camera};
+
+      \path (120:5cm) coordinate (light);
+      \fill (light) circle (0.1cm) node[above] {Light Source};
+    \end{tikzpicture}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Direct Lighting}
+  \begin{figure}
+    \includegraphics[width=\textwidth]{debugDirect}
+    \caption*{Direct Lighting}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Indirect Lighting}
@@ -809,7 +856,7 @@
 % \end{frame}
 
 % First, and most important, test was to measure the general performance of the algorithm. We also varied the voxel grid resolution and screen resolution to see how it affected performance. Here are some screenshots of the varying voxel grid dimensions, starting at 64x64x64
-
+\subsection{Results}
 \begin{frame}{Performance}
   \begin{figure}
     \includegraphics<1>[width=\textwidth]{results_720_64}
@@ -887,9 +934,17 @@
   \end{figure}
 \end{frame}
 
+\begin{frame}{Rasterized vs. Tessellated Voxels}
+  \begin{block}{Summary}
+    \begin{description}
+      \item[Rasterized:] slightly faster, conservative rasterization, dominant axis projection, precision limited by fragments
+      \item[Tessellated:] easier to implement, full precision, max triangle size limited by hardware
+    \end{description}
+  \end{block}
+\end{frame}
+
 % Lastly we evaluated our voxel warping...
 \begin{frame}{Voxel Warping}
-  % TODO picture of linear on one side and warped on other with guidelines (just do cubic) and show warp slope and voxels
   \begin{figure}
     \includegraphics<1>[width=\textwidth]{voxelwarp_off}
     \includegraphics<2>[width=\textwidth]{voxelwarp_on}
@@ -901,7 +956,6 @@
 \end{frame}
 
 \begin{frame}{Perspective Voxel Warping}
-  % TODO picture of linear on one side and warped on other with guidelines (just do cubic) and show warp slope and voxels
   \begin{figure}
     \includegraphics<1>[width=\textwidth]{tesswarp_off}
     \includegraphics<2>[width=\textwidth]{tesswarp_on}
@@ -913,6 +967,7 @@
 \end{frame}
 
 % \newcommand{\smallcolumns}[4][0.5, 0.5]{\begin{columns}\begin{column}{#1\textwidth}#3\end{column}\begin{column}{#2\textwidth}#4\end{column}\end{columns}}
+\subsection{Related Work}
 \begin{frame}{Related Work}
   How does it compare with other methods?
   \vspace{1cm}
@@ -927,7 +982,6 @@
 \end{frame}
 
 \begin{frame}{Related Work---Reflective Shadowmaps}
-  Important parts of global illumination algorithms:
   \begin{enumerate}
     \item Scene representation? \alert{Reflective shadowmap (RSM)}% reused from shadowmap
     \item Light computation? \alert{None, use color and normal from RSM}% normal and color stored along with shadowmap
@@ -943,7 +997,6 @@
 \end{frame}
 
 \begin{frame}{Related Work---Light Propagation Volumes}
-  Important parts of global illumination algorithms:
   \begin{enumerate}
     \item Scene representation? \alert{Voxel grid (incomplete)}% low resolution voxel grid (originally this wasn't a complete voxelization---it was constructed from other info like shadowmap and depth information), stored in (cascaded) 3d texture
     \item Light computation? \alert{Iterative propagation} % light is iteratively propagated/filtered to neighboring voxels until the information is stable
@@ -961,7 +1014,6 @@
 \end{frame}
 
 \begin{frame}{Related Work---Voxel Cone Tracing}
-  Important parts of global illumination algorithms:
   \begin{enumerate}
     \item Scene representation? \alert{Sparse voxel octree (or clipmap)}% high resolution voxel grid (in sparse voxel octree, in vxgi in clipmap). also this is where the rasterized voxelization approach came from
     \item Light computation? \alert{Mipmaps} % make mipmaps, the same as our implementation
@@ -978,7 +1030,6 @@
 \end{frame}
 
 \begin{frame}{Related Work---Ours}
-  Important parts of global illumination algorithms:
   \begin{enumerate}
     \item Scene representation? \alert{Warped voxel grid} % high resolution voxel grid (in warped 3D texture). tessellated voxelization (side note: we briefly checked if this had been done already and didn't find anything at first. after implementing it we looked again and found a single paper on ACM from 2012 with a citation count of 0 and 252 cumulative downloads ever)
     \item Light computation? \alert{Mipmaps} % make mipmaps
@@ -991,10 +1042,13 @@
   % cons warping suffers from flickering
 \end{frame}
 
+% TODO related works summary slide? pros/cons on each related work slide?
+
+\subsection{Conclusion}
 \begin{frame}{Conclusion}
   % wrap up and list contributions again
   \begin{itemize}
-    \item Real-time implementation\footnote{Find the source here: \url{github.com/sfreed141/vct}} of global illumination using voxel cone tracing
+    \item Implementation\footnote{Find the source here: \url{github.com/sfreed141/vct}} of real-time global illumination using voxel cone tracing
     \item Implementation and comparison of two voxelization methods
     \item Investigation into warped voxels
   \end{itemize}
