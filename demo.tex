@@ -112,12 +112,13 @@
     % \centering
     \item Real-time global illumination is difficult % lots of computation, most algorithms require a lot of parts so it's difficult to start from scratch (like most of us)
       \begin{itemize}
-        \item Many steps and things to keep track of
+        \item Approximations need to be as fast and accurate as possible
+        \item Many steps and stuff to keep track of
       \end{itemize}
     \item Limited reference material
         \begin{itemize}
           \item Not much public code  % solutions developed in the industry or by researchers often aren't open source (e.g. vxgi is binary, code accompanying research papers not there or perhaps integrated into proprietary codebase)
-          \item Demo code or part of large engine % most is limited in scope or is tied to an engine, making it difficult to extend or integrate into your own project
+          \item Demo or engine code % most is limited in scope or is tied to an engine, making it difficult to extend or integrate into your own project
         \end{itemize}
     \pause
     \item It's cool % the real reason tbh
@@ -128,7 +129,7 @@
 \begin{frame}{Contributions}
   \begin{itemize}
     \item Open-source, cross-platform implementation of real-time global illumination (using voxel cone tracing) % except for apple since they don't like opengl. the big goal here is for others to be able to work on it and do cool stuff (jaafer already used the vct part :) ). voxel cone tracing is the general technique used to achieve gi
-    \item Comparison two different methods of scene voxelization (rasterization vs.\ tessellation)% voxelization is an important part of many new gi algorithms so we wanted to compare two different methods
+    \item Comparison of two different methods of scene voxelization (rasterization vs.\ tessellation)% voxelization is an important part of many new gi algorithms so we wanted to compare two different methods
     \item Investigation into warped (nonuniform size) voxels % more on this later, first I'd like to give a crash course in graphics and an overview of other solutions to real time gi
   \end{itemize}
 \end{frame}
@@ -146,7 +147,7 @@
   \begin{block}{Big Issues}
     \begin{enumerate}
       \item How do we represent a scene? What information is required?  % geometry (triangles, voxels), materials (colors, properties), lights (type, position, color, direction), etc.
-      \item How is a 3D scene represented as a 2D image?  % implies some transformation needed
+      \item How is a 3D scene represented as a 2D image?  % implies some transformation needed. we'll also quickly look at how the GPU accomplishes this since it'll help when explaining stuff later
       \item How do we render---how is the final pixel color computed? % lighting/shading model; this is the focus of this thesis
     \end{enumerate}
   \end{block}
@@ -198,6 +199,7 @@
   \end{columns}
 \end{frame}
 
+% The second question was how to represent 3D objects in 2D. Once the objects are defined in a common coordinate system, we define this view frustum which determines the objects we'll see. From there we can apply a projection to get a 2D position along with a depth.
 {\setbeamertemplate{frame footer}{image from Real-Time Rendering} % TODO cite
 \begin{frame}{How is a 3D scene represented as a 2D image?}
   Math!
@@ -210,57 +212,56 @@
 
 \end{frame}}
 
+% % The typical transformation to transform any vertex from a typical triangle mesh to its final spot on the screen is shown here. The important step here is getting the vertices into view space, which Keeping track of which space you're working in for lighting and other computations is super important.
+% \begin{frame}{How is a 3D scene represented as a 2D image?}
+%   % picture of coordinate systems and give brief explanation, since explain more along with the graphics pipeline
+%   % showing this so everyone is comfortable when explaining algorithms
+%   % ...and this is accomplished with <flick> THE GRAPHICS PIPELIIIIIIINE
 
-\begin{frame}{How is a 3D scene represented as a 2D image?}
-  % picture of coordinate systems and give brief explanation, since explain more along with the graphics pipeline
-  % showing this so everyone is comfortable when explaining algorithms
-  % ...and this is accomplished with <flick> THE GRAPHICS PIPELIIIIIIINE
+%   \begin{figure}
+%     \includegraphics[width=\textwidth]{learnopengl_coordinate_systems.png}
+%   \end{figure}
 
-  \begin{figure}
-    \includegraphics[width=\textwidth]{learnopengl_coordinate_systems.png}
-  \end{figure}
+%   % \begin{description}[<+| only@+>]
+%   %   \item[Local/Object Space] coordinate system relative to a single object
+%   %   \item[World Space] a global coordinate system for the virtual world
+%   %   \item[View Space] coordinates are with respect to the camera
+%   %   \item[Clip Space/NDC] defines a frustum in which objects will be rasterized % those outside the frustum are clipped
+%   %   \item[Screen Space] coordinates are the pixel position and a depth value
+%   % \end{description}
 
-  % \begin{description}[<+| only@+>]
-  %   \item[Local/Object Space] coordinate system relative to a single object
-  %   \item[World Space] a global coordinate system for the virtual world
-  %   \item[View Space] coordinates are with respect to the camera
-  %   \item[Clip Space/NDC] defines a frustum in which objects will be rasterized % those outside the frustum are clipped
-  %   \item[Screen Space] coordinates are the pixel position and a depth value
-  % \end{description}
+%   % Also other spaces, like texture space [0, 1], image space (integral coordinates),
 
-  % Also other spaces, like texture space [0, 1], image space (integral coordinates),
+% \end{frame}
 
-\end{frame}
+% \begin{frame}{How is a 3D scene represented as a 2D image?}
+%   \begin{center}
+%     \huge\textbf{The Graphics Pipeline}
+%   \end{center}
+%   % This is the standard sequence of events that render the final image from our scene. For nonstandard stuff like voxelization these stages are often abused to increase performance.
+%   % We'll go over the entire pipeline for sake of completess
+%   \begin{figure}
+%     \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
+%   \end{figure}
+% \end{frame}
 
-\begin{frame}{How is a 3D scene represented as a 2D image?}
-  \begin{center}
-    \huge\textbf{The Graphics Pipeline}
-  \end{center}
-  % picture of pipeline
-  % This is the standard sequence of events that render the final image from our scene
-  % We'll go over the entire pipeline for sake of completess
-  \begin{figure}
-    \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
-  \end{figure}
-\end{frame}
+% \begin{frame}{The Graphics Pipeline}
+%   \begin{figure}
+%     \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
+%   \end{figure}
 
-\begin{frame}{The Graphics Pipeline}
-  \begin{figure}
-    \includegraphics[width=\textwidth]{learnopengl_graphicspipeline.png}
-  \end{figure}
+%   \begin{description}[<+| only@+>]
+%     \item[Input] A series of vertices containing attributes like position, normal, and texture coordinates.
+%     \item[Vertex Shading] Executed for each vertex. Usually applies transforms.
+%     \item[Shape Assembly] Form geometric primitives from vertices (like triangles). Tessellation, a way to subdivide points, can also occur around here.
+%     \item[Geometry Shading] Operate on primitives.
+%     \item[Rasterization] Generate fragments for pixels covered by primitives.
+%     \item[Fragment Shading] Executed for each fragment. Usually shading occurs here.
+%     \item[Testing and Blending] Depth testing and alpha blending.
+%   \end{description}
 
-  \begin{description}[<+| only@+>]
-    \item[Input] A series of vertices containing attributes like position, normal, and texture coordinates.
-    \item[Vertex Shading] Executed for each vertex. Usually transforms points to clip space.
-    \item[Shape Assembly] Form geometric primitives from vertices (like triangles).
-    \item[Geometry Shading] Operate on primitives.
-    \item[Rasterization] Generate fragments for pixels covered by primitives.
-    \item[Fragment Shading] Executed for each fragment. Usually shading occurs here.
-    \item[Testing and Blending] Depth testing and alpha blending.
-  \end{description}
-
-  % There are also compute shaders for operating on arbitrary data and tessellation shaders for dynamically subdividing primitives (as we'll see in a bit).
-\end{frame}
+%   % There are also compute shaders for operating on arbitrary data and tessellation shaders for dynamically subdividing primitives (as we'll see in a bit).
+% \end{frame}
 
 % \begin{frame}{Compute Shader}
 %   % just want to introduce the concept since I'll mention them in implementation
@@ -287,6 +288,7 @@
   % Lighting algorithms are numerical approximations
   % The direct light is relatively straightforward to compute: for each point we can iterate through all the lights and sum their contributions
   % Indirect light is the hard part, since the light can come from anywhere in the scene. To figure out all the light in the scene we'd have to test every possible direction in this hemisphere. Therefore we have to resort to approximations...
+  % Often the spots where indirect light comes from like right here on the wall are called virtual point lights. The idea is that they behave like normal light sources but they're virtual because the light is essentially sourced from somewhere else (the primary light sources)
 
   \begin{figure}
     \begin{tikzpicture}
@@ -331,19 +333,21 @@
     \item[Constant] Fixed fraction of ambient light % as seen in first image
     \item[Partial] Ambient occlusion, soft shadows, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
     \item[Static] Baked lighting, light probes
-    \item[Dynamic] Light Propagation Volumes, Voxel Cone Tracing
+    \item[Dynamic] Reflective Shadowmaps, Light Propagation Volumes, Voxel Cone Tracing
   \end{description}
 \end{frame}
 
 % Most algorithms end up having the same main steps. The differences generally come from what the representation is (volumetric? screen space? is it complete or just local?) and how it's stored (if any special data structure is used). When doing the final gathering of the light there's often a clever way to sample the lighting to reduce computations.
 \begin{frame}{Real-Time Global Illumination}
-  Most global illumination algorithms follow a few main steps:
+  Most dynamic global illumination algorithms follow a few main steps:
 
   \begin{enumerate}
     \item Construct representation of the scene
-    \item Derive indirect lighting information from representation
+    \item Calculate lighting information
     \item Collect indirect lighting when rendering
   \end{enumerate}
+
+  % So for our algorithm the first thing we do is voxelize the scene so we have a volumetric representation. Then, we place our indirect light sources (vpls) into the voxels and downsample it. Finally, we use voxel cone tracing to sample the indirect light from the voxels.
 \end{frame}
 
 % \begin{frame}{Spatial Data Structures}
@@ -381,53 +385,53 @@
 
 % ask for any questions or clarification here? (after related work too maybe?)
 
-\section{Related Work}
+% \section{Related Work}
 
-\subsection{VPLs and RSMs}
-\begin{frame}{VPLs and RSMs}
-  % Just want to introduce the concept of VPLs and RSMs are simple way of doing that
-  \begin{description}
-    \item[Virtual Point Lights] Treat arbitrary objects or locations as light sources
-    \item[Reflective Shadow Maps] Treat each pixel of a shadowmap as a VPL % when rendering project point into shadowmap and gather lighting contributions from VPLs; problem is poor occlusion information and only low frequency lighting
-  \end{description}
+% \subsection{VPLs and RSMs}
+% \begin{frame}{VPLs and RSMs}
+%   % Just want to introduce the concept of VPLs and RSMs are simple way of doing that
+%   \begin{description}
+%     \item[Virtual Point Lights] Treat arbitrary objects or locations as light sources
+%     \item[Reflective Shadow Maps] Treat each pixel of a shadowmap as a VPL % when rendering project point into shadowmap and gather lighting contributions from VPLs; problem is poor occlusion information and only low frequency lighting
+%   \end{description}
 
-  \begin{figure}
-    \includegraphics<+>[width=\textwidth]{rsm.png}
-    \includegraphics<+>[width=\textwidth]{rsm_vpl.png}
-  \end{figure}
+%   \begin{figure}
+%     \includegraphics<+>[width=\textwidth]{rsm.png}
+%     \includegraphics<+>[width=\textwidth]{rsm_vpl.png}
+%   \end{figure}
 
-  % another slide for pros/cons?
-\end{frame}
+%   % another slide for pros/cons?
+% \end{frame}
 
-% LPVs and VCT after implementation? doesn't really help as background info
-\subsection{Light Propagation Volumes}
-\begin{frame}{Light Propagation Volumes}
-  % low frequency but fairly stable, no occlusion (limited info from reusing), cascaded
-  % iterative process to propagate light throughout scene
+% % LPVs and VCT after implementation? doesn't really help as background info
+% \subsection{Light Propagation Volumes}
+% \begin{frame}{Light Propagation Volumes}
+%   % low frequency but fairly stable, no occlusion (limited info from reusing), cascaded
+%   % iterative process to propagate light throughout scene
 
-  \begin{itemize}
-    \item Store VPLs in a voxel grid
-    \item Iteratively propagate lighting contribution until stable
-  \end{itemize}
+%   \begin{itemize}
+%     \item Store VPLs in a voxel grid
+%     \item Iteratively propagate lighting contribution until stable
+%   \end{itemize}
 
-  \begin{figure}
-    \includegraphics[width=\textwidth]{lpv.png}
-  \end{figure}
-\end{frame}
+%   \begin{figure}
+%     \includegraphics[width=\textwidth]{lpv.png}
+%   \end{figure}
+% \end{frame}
 
-\subsection{Voxel Cone Tracing}
-\begin{frame}{Voxel Cone Tracing}
-  % complete occlusion info, sparse voxel octree, specular reflections
+% \subsection{Voxel Cone Tracing}
+% \begin{frame}{Voxel Cone Tracing}
+%   % complete occlusion info, sparse voxel octree, specular reflections
 
-  \begin{itemize}
-    \item Sparse voxel octree % occlusion information
-    \item High resolution (diffuse and specular lighting)
-  \end{itemize}
+%   \begin{itemize}
+%     \item Sparse voxel octree % occlusion information
+%     \item High resolution (diffuse and specular lighting)
+%   \end{itemize}
 
-  \begin{figure}
-    \includegraphics[width=\textwidth]{vct.png}
-  \end{figure}
-\end{frame}
+%   \begin{figure}
+%     \includegraphics[width=\textwidth]{vct.png}
+%   \end{figure}
+% \end{frame}
 
 % TODO quick recap here?
 % most important bits: voxels represent 3d data well and thus voxelization is important; vpls are core part of most gi algorithms; lpv and vct use regular grid
@@ -446,6 +450,8 @@
 \begin{frame}{Overview of Renderer}
   % flowchart or something showing each render pass
   % list of all major resources (3ish voxel textures, shadowmap, meshes, materials)
+
+  % Really what we have is a forward style rendering engine with support for rigid body animation, multiple lights, normal mapping, shadows, and of course global illumination
 
   \begin{columns}
     \begin{column}{0.5\textwidth}
@@ -503,17 +509,11 @@
 \begin{frame}{Conservative Rasterization}
   % Here is a comparison between no conservative rasterization and with. We use an MSAA based method (a good compromise between simplicity, quality, and it's cross vendor)
 
-  \Wider{\begin{figure}
-    \begin{subfigure}[t]{0.45\textwidth}
-      \includegraphics[width=\textwidth]{voxels_off}
-      \caption*{Off}
-    \end{subfigure}
-    ~
-    \begin{subfigure}[t]{0.45\textwidth}
-      \includegraphics[width=\textwidth]{voxels_msaa}
-      \caption*{On}
-    \end{subfigure}
-  \end{figure}}
+  \begin{figure}
+    \includegraphics<1>[width=\textwidth]{voxels_off}
+    \includegraphics<2>[width=\textwidth]{voxels_msaa}
+    \caption*{With\only<1>{out} conservative rasterization}
+  \end{figure}
 \end{frame}
 
 \begin{frame}{Voxelization with Tessellator}
@@ -549,8 +549,13 @@
 
 \begin{frame}{Voxelized Scene}
   % Opacity, color, and normals are stored in voxel textures. Since multiple shader invocations can write to the same voxel we need to use atomic operations. Both an atomic max and atomic average are supported.
+
+  % Here's the scene colored using the rasterized voxel values. You can see some of spots where conservative rasterization didn't work completely.
+  % And here are the tessellated voxels. Parts of it seem higher resolution due to not having the rasterizer produce the fragments. Also the spots where conservative rasterization didn't work well aren't an issue here. The kinda unfortunate problem though are the cracks, which are caused when the tessellation level can't get high enough, which is a hardware limitation. A possible workaround for this would be to split any large triangles when initially loading the meshes. Luckily since we'll be filtering this later most of these cracks aren't too noticeable.
   \begin{figure}
-    \includegraphics[width=\textwidth]{voxels_msaa}
+    \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
+    \includegraphics<2>[width=\textwidth]{tessvoxels_nowarp}
+    \caption*{\only<1>{Scene colored with rasterized voxels}\only<2>{\\Scene colored with tessellated voxels}}
   \end{figure}
 \end{frame}
 
@@ -662,7 +667,7 @@
 \begin{frame}{Indirect Lighting}
   % \begin{columns}
   %   \begin{column}{0.5\textwidth}
-      \begin{block}{Voxel Cone Tracing Idea}
+      \begin{block}{Voxel Cone Tracing}
         \begin{enumerate}
           \item Sample light from the radiance texture along a particular direction
           \item Adjust level of detail as we get farther from sample point
@@ -727,6 +732,74 @@
   % TODO picture of linear on one side and warped on other with guidelines (just do cubic) and show warp slope and voxels
 \end{frame}
 
+\begin{frame}{Vary with distance from camera}
+  \begin{enumerate}
+    \item Find voxel position normalized to $[0, 1]$
+    \item Apply `warping' function $w: [0, 1] \rightarrow [0, 1]$
+  \end{enumerate}
+
+  The camera is in the middle ($x = 0.5$)
+
+  \begin{figure}
+    \begin{tikzpicture}[scale=0.8]
+      \begin{axis}[
+        xlabel = {linear position},
+        ylabel = {warped position},
+        title = {Voxel Warp Function},
+        xmin = 0, ymin = 0, xmax = 1, ymax = 1,
+      %   extra x ticks={0.5},
+      %   extra x tick style={tick label style={anchor=south}},
+      %   extra x tick labels={camera}
+      ]
+        \addplot[
+          domain=0:1,
+          samples=100,
+        ]{0.25 * x + (3 - 3 * 0.25) * x * x + (2 * 0.25 - 2) * x * x * x};
+        \draw[dashed] (axis cs:0.4, 0.0) -- (axis cs:0.4, 0.364) -- (axis cs:0.0, 0.364);
+        \draw[dashed] (axis cs:0.6, 0.0) -- (axis cs:0.6, 0.636) -- (axis cs:0.0, 0.636);
+      \end{axis}
+    \end{tikzpicture}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Vary with distance from camera}
+  \begin{figure}
+    \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
+    \includegraphics<2>[width=\textwidth]{rastervoxel_warp}
+    \caption*{\only<1>{Without warping}\only<2>{With warping}}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Vary based on perspective}
+  \begin{itemize}
+    \item Use perspective projection to determine voxel size
+    \item Makes voxel size based on relative size in screen space
+  \end{itemize}
+
+  \begin{figure}
+    \begin{tikzpicture}[scale=0.9]
+      \foreach \angle in {30, 22.5, 15, 7.5, 0, -7.5, -15, -22.5, -30} {
+        \draw (0, 0) -- (5, {5 * tan(\angle)});
+      }
+      \foreach \z in {0.5, 1.0,...,5.0} {
+        \draw (\z, {\z * tan(30)}) -- (\z, {\z * tan(-30)});
+      }
+      \filldraw (0,0) circle (2pt) node[anchor=east] {camera};
+      \draw[dashed, thick] (0.5, 1) -- (0.5, -1) node[anchor=north] {near plane};
+      \draw[dashed, thick] (5, 3.5) -- (5, -3.5) node[anchor=north] {far plane};
+      \draw[very thick] (0.5, {0.5 * tan(30)}) -- (5, {5 * tan(30)}) -- (5, {-5 * tan(30)}) -- (0.5, {-0.5 * tan(30)}) -- cycle;
+      \draw (2.5, {2.5 * tan(30)}) node[anchor=south, rotate=30] {view frustum};
+    \end{tikzpicture}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Vary based on perspective}
+  \begin{figure}
+    \includegraphics<1>[width=\textwidth]{tessvoxels_nowarp}
+    \includegraphics<2>[width=\textwidth]{tessvoxels_warp}
+    \caption*{\only<1>{Without warping}\only<2>{With warping}}
+  \end{figure}
+\end{frame}
 
 \section{Results and Conclusions}
 
@@ -753,7 +826,7 @@
   % analysis (which render passes were affected by what, etc)
 \end{frame}
 
-% And here we have the timing information. Each bar is for a given screen resolution and voxel grid resolution and shows the individual contributions of each render pass. For the typical 60fps goal for real-time (which is about 17ms) you see we meet the 60fps goal for all tested resolutions!
+% And here we have the timing information. Each bar is for a given screen resolution and voxel grid resolution and shows the individual contributions of each render pass. For the typical 60fps goal for real-time (which is about 17ms) you see we meet the 60fps goal for all tested resolutions! I should admit this is on a GTX 970, a somewhat mid-high range graphics card, but we think these are reasonable times everything considered. I'm sure the implementation could also be optimized heavily (especially the voxelization (e.g. lower res models) and cone tracing (e.g. raymarch opts, interpolate downscaled version))
 % Then talk about individual contributions (constant, varies with screen, varies with grid, with both)
 \begin{frame}{Performance}
   \begin{figure}
@@ -839,15 +912,93 @@
   \end{figure}
 \end{frame}
 
-{\setbeamertemplate{frame footer}{*Find the source here: \url{github.com/sfreed141/vct}}
+% \newcommand{\smallcolumns}[4][0.5, 0.5]{\begin{columns}\begin{column}{#1\textwidth}#3\end{column}\begin{column}{#2\textwidth}#4\end{column}\end{columns}}
+\begin{frame}{Related Work}
+  How does it compare with other methods?
+  \vspace{1cm}
+
+  % From the beginning I mentioned some general steps most gi algorithms follow. I'd like to point out how our work compares to some other related work by quickly going through each of these points with a few other techniques as presented in their research papers.
+  Important parts of global illumination algorithms:
+  \begin{enumerate}
+    \item Scene representation? % what information do we use for the lighting?
+    \item Light computation? % how is the lighting computed? is there any intermediate computation required before the final light sampling?
+    \item Light sampling? % how do we sample the lighting?
+  \end{enumerate}
+\end{frame}
+
+\begin{frame}{Related Work---Reflective Shadowmaps}
+  Important parts of global illumination algorithms:
+  \begin{enumerate}
+    \item Scene representation? \alert{Reflective shadowmap (RSM)}% reused from shadowmap
+    \item Light computation? \alert{None, use color and normal from RSM}% normal and color stored along with shadowmap
+    \item Light sampling? \alert{Sample nearby points in RSM} % project point into the RSM and sample nearby points
+  \end{enumerate}
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{rsm}
+  \end{figure}
+
+  % pros straighforward, doesn't require any fancy data structures
+  % cons no occlusion information and complexity linear wrt number of lights, no specular
+\end{frame}
+
+\begin{frame}{Related Work---Light Propagation Volumes}
+  Important parts of global illumination algorithms:
+  \begin{enumerate}
+    \item Scene representation? \alert{Voxel grid (incomplete)}% low resolution voxel grid (originally this wasn't a complete voxelization---it was constructed from other info like shadowmap and depth information), stored in (cascaded) 3d texture
+    \item Light computation? \alert{Iterative propagation} % light is iteratively propagated/filtered to neighboring voxels until the information is stable
+    \item Light sampling? \alert{Texture lookup} % simple lookup into voxel texture
+  \end{enumerate}
+
+  \begin{figure}
+    \centering
+    \includegraphics[height=0.5\textheight]{lpvpropagation}
+  \end{figure}
+
+
+  % pros stable lighting, smaller memory requirements since lower resolution grid
+  % cons occlusion info not complete, no specular
+\end{frame}
+
+\begin{frame}{Related Work---Voxel Cone Tracing}
+  Important parts of global illumination algorithms:
+  \begin{enumerate}
+    \item Scene representation? \alert{Sparse voxel octree (or clipmap)}% high resolution voxel grid (in sparse voxel octree, in vxgi in clipmap). also this is where the rasterized voxelization approach came from
+    \item Light computation? \alert{Mipmaps} % make mipmaps, the same as our implementation
+    \item Light sampling? \alert{Voxel cone tracing} % voxel cone tracing
+  \end{enumerate}
+
+  \begin{figure}
+    \includegraphics[width=\textwidth]{vct}
+  \end{figure}
+
+
+  % pros specular
+  % cons octree is complicated (especially if scene is dynamic since octree nodes need to be managed well), clipmap also somewhat complex and still uses lots of memory
+\end{frame}
+
+\begin{frame}{Related Work---Ours}
+  Important parts of global illumination algorithms:
+  \begin{enumerate}
+    \item Scene representation? \alert{Warped voxel grid} % high resolution voxel grid (in warped 3D texture). tessellated voxelization (side note: we briefly checked if this had been done already and didn't find anything at first. after implementing it we looked again and found a single paper on ACM from 2012 with a citation count of 0 and 252 cumulative downloads ever)
+    \item Light computation? \alert{Mipmaps} % make mipmaps
+    \item Light sampling? \alert{Voxel cone tracing} % voxel cone tracing
+  \end{enumerate}
+
+  % So what we really gained from looking into the voxelization is that warped voxels might be viable if the temporal issues can be fixed. The tessellated voxelization might help with that since we can work with the arbitrary vertex coordinates instead of having to effectively truncate them to rasterized fragments (we don't lose precision)
+
+  % pros simple, has specular, adaptive resolution
+  % cons warping suffers from flickering
+\end{frame}
+
 \begin{frame}{Conclusion}
   % wrap up and list contributions again
   \begin{itemize}
-    \item Real-time implementation of global illumination using voxel cone tracing
+    \item Real-time implementation\footnote{Find the source here: \url{github.com/sfreed141/vct}} of global illumination using voxel cone tracing
     \item Implementation and comparison of two voxelization methods
     \item Investigation into warped voxels
   \end{itemize}
-\end{frame}}
+\end{frame}
 
 \begin{frame}{Future Work}
   % other ways of adjusting resolution are more feasible due to temporal artifacts
@@ -856,9 +1007,9 @@
 
   \begin{itemize}
     \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
-    \item Take advantage of tessellated voxelization to evenly distribute vertices for warped voxels % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
+    \item Take advantage of tessellated voxelization to try to resolve temporal artifacts % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
     % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
-    \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality % miscellaneous improvements and optimizations
+    \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality, other miscellaneous optimizations % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
   \end{itemize}
 \end{frame}
 
