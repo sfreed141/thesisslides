@@ -1,6 +1,6 @@
 \documentclass[10pt]{beamer}
 
-\usetheme[block=fill]{metropolis}
+\usetheme[block=fill,sectionpage=none]{metropolis}
 \usepackage{appendixnumberbeamer}
 
 \usepackage{booktabs}
@@ -16,6 +16,7 @@
 \usepackage{bm}
 \usepackage{pgfplots}
 \usepackage{algorithm,algpseudocode} % https://tex.stackexchange.com/a/230789
+\usepackage[export]{adjustbox}
 
 \graphicspath{ {figures/} }
 
@@ -35,14 +36,14 @@
 \institute{California Polytechnic State University, San Luis Obispo}
 % \titlegraphic{\hfill\includegraphics[height=1.5cm]{logo.pdf}}
 
-\AtBeginSection[]
-{
-	\begin{frame}
-      \frametitle{Outline}
-      \setbeamertemplate{section in toc}[sections numbered]
-        \tableofcontents[currentsection,hideothersubsections]
-	\end{frame}
-}
+% \AtBeginSection[]
+% {
+% 	\begin{frame}
+%       \frametitle{Outline}
+%       \setbeamertemplate{section in toc}[sections numbered]
+%         \tableofcontents[currentsection,hideothersubsections]
+% 	\end{frame}
+% }
 
 \begin{document}
 
@@ -111,17 +112,17 @@
   \begin{enumerate}
     % \centering
     \item Real-time global illumination is difficult % lots of computation, most algorithms require a lot of parts so it's difficult to start from scratch (like most of us)
-      \begin{itemize}
-        \item Approximations need to be as fast and accurate as possible
-        \item Many steps and stuff to keep track of
-      \end{itemize}
+      % \begin{itemize}
+      %   \item Approximations need to be as fast and accurate as possible
+      %   \item Many steps and stuff to keep track of
+      % \end{itemize}
     \item Limited reference material
-        \begin{itemize}
-          \item Not much public code  % solutions developed in the industry or by researchers often aren't open source (e.g. vxgi is binary, code accompanying research papers not there or perhaps integrated into proprietary codebase)
-          \item Demo or engine code % most is limited in scope or is tied to an engine, making it difficult to extend or integrate into your own project
-        \end{itemize}
-    \pause
-    \item It's cool % the real reason tbh
+        % \begin{itemize}
+        %   \item Not much public code  % solutions developed in the industry or by researchers often aren't open source (e.g. vxgi is binary, code accompanying research papers not there or perhaps integrated into proprietary codebase)
+        %   \item Demo or engine code % most is limited in scope or is tied to an engine, making it difficult to extend or integrate into your own project
+        % \end{itemize}
+    % \pause
+    % \item It's cool % the real reason tbh
   \end{enumerate}
 \end{frame}
 
@@ -156,14 +157,14 @@
 \end{frame}
 
 \begin{frame}{How do we represent a scene?}
-  \setbeamercovered{transparent}
+  % \setbeamercovered{transparent}
   \begin{columns}
     \begin{column}{0.5\textwidth}
-      \begin{itemize}[<+>]
-        \item Geometry: triangles, voxels % triangles inherently 2D->good for surfaces, not so much for volumetric data. recent gpu developments have made working with nontriangle data more viable, which is why the voxel representation is gaining popularity
-        \item Materials: colors and other properties % albedo + roughness, normal maps (kinda)
-        \item Lights: positions, colors, etc.
-      \end{itemize}
+      \begin{description}[<+>]
+        \item[Geometry] triangles, voxels % triangles inherently 2D->good for surfaces, not so much for volumetric data. recent gpu developments have made working with nontriangle data more viable, which is why the voxel representation is gaining popularity
+        \item[Materials] colors and other properties % albedo + roughness, normal maps (kinda)
+        \item[Lights] positions, colors, etc.
+      \end{description}
     \end{column}
     \begin{column}{0.5\textwidth}
       \only<1>{
@@ -486,14 +487,14 @@
 \end{frame}
 
 
-\AtBeginSubsection[]
-{
-	\begin{frame}
-      \frametitle{Outline}
-      % \setbeamertemplate{section in toc}[sections numbered]
-        \tableofcontents[currentsection,subsectionstyle=show/shaded/hide]
-	\end{frame}
-}
+% \AtBeginSubsection[]
+% {
+% 	\begin{frame}
+%       \frametitle{Outline}
+%       % \setbeamertemplate{section in toc}[sections numbered]
+%         \tableofcontents[currentsection,subsectionstyle=show/shaded/hide]
+% 	\end{frame}
+% }
 
 \subsection{Voxelization}
 {\setbeamertemplate{frame footer}{image from \href{https://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-SparseVoxelization.pdf}{OpenGL Insights: Octree-Based Sparse Voxelization Using the GPU Hardware Rasterizer} by Cyril Crassin and Simon Green}
@@ -511,12 +512,12 @@
   % Of particular importance with the rasterization approach is the need for conservative rasterization. In general, a fragment is only generated for a triangle if that triangle overlaps the center of the fragment (pixel). This can cause undesirable cracks and holes in the voxelization. Conservative rasterization is meant to address this by generating a fragment for even partially overlapped fragments.
 
   \begin{figure}
-    \begin{subfigure}[t]{0.4\textwidth}
+    \begin{subfigure}[t]{0.475\textwidth}
       \includegraphics[width=\textwidth]{conservativeraster_off}
       \caption*{Off}
     \end{subfigure}
     ~
-    \begin{subfigure}[t]{0.4\textwidth}
+    \begin{subfigure}[t]{0.475\textwidth}
       \includegraphics[width=\textwidth]{conservativeraster_on}
       \caption*{On}
     \end{subfigure}
@@ -527,9 +528,15 @@
   % Here is a comparison between no conservative rasterization and with. We use an MSAA based method (a good compromise between simplicity, quality, and it's cross vendor)
 
   \begin{figure}
-    \includegraphics<1>[width=\textwidth]{voxels_off}
-    \includegraphics<2>[width=\textwidth]{voxels_msaa}
-    \caption*{With\only<1>{out} conservative rasterization}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.5\width} 0},clip]{voxels_off}
+      \caption*{Off}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.5\width} 0},clip]{voxels_msaa}
+      \caption*{On}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
@@ -570,10 +577,21 @@
 
   % Here's the scene colored using the rasterized voxel values. You can see some of spots where conservative rasterization didn't work completely.
   % And here are the tessellated voxels. Parts of it seem higher resolution due to not having the rasterizer produce the fragments. Also the spots where conservative rasterization didn't work well aren't an issue here. The kinda unfortunate problem though are the cracks, which are caused when the tessellation level can't get high enough, which is a hardware limitation. A possible workaround for this would be to split any large triangles when initially loading the meshes. Luckily since we'll be filtering this later most of these cracks aren't too noticeable.
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
+  %   \includegraphics<2>[width=\textwidth]{tessvoxels_nowarp}
+  %   \caption*{\only<1>{Scene colored with rasterized voxels}\only<2>{\\Scene colored with tessellated voxels}}
+  % \end{figure}
   \begin{figure}
-    \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
-    \includegraphics<2>[width=\textwidth]{tessvoxels_nowarp}
-    \caption*{\only<1>{Scene colored with rasterized voxels}\only<2>{\\Scene colored with tessellated voxels}}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{rastervoxel_nowarp}
+      \caption*{Off}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{tessvoxels_nowarp}
+      \caption*{On}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
@@ -603,15 +621,20 @@
   \end{figure}
 \end{frame}
 
+{\setbeamertemplate{frame footer}{left image from \href{http://on-demand.gputechconf.com/gtc/2014/presentations/S4552-rt-voxel-based-global-illumination-gpus.pdf}{Practical Real-time Voxel-based Global Illumination for Current GPUs} by Alexey Panteleev}
 \begin{frame}{Radiance Injection---Injecting VPLs}
-  For each pixel in the shadowmap, find it's voxel index and insert the corresponding color into the radiance texture.
-
-  Using the light matrix and stored depth value, we compute the point's world space position.
+  Insert the corresponding color into radiance texture from shadowmap.
 
   \begin{figure}
-    \includegraphics[width=0.8\textwidth]{radiance_nolighting}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \includegraphics[width=\textwidth]{lightinjection}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.2\width} 0},clip]{radiance_nolighting}
+    \end{subfigure}
   \end{figure}
-\end{frame}
+\end{frame}}
 
 % Now that we have a high resolution version of the light in the scene we want to smooth it out. This step is for mimicing how light should spread out and bounce around. The number of levels (the mipmaps) of filtered light is a configurable parameter and each level is half the size of the previous. To compute the next level we just average neighboring voxels.
 \begin{frame}{Radiance Filtering}
@@ -641,12 +664,40 @@
 % the cracks are the result of imperfect voxelization (conservative rasterization)
 % also this is only showing the surface values, the empty space also contains semi-opaque colors
 \begin{frame}{Radiance Filtering}
+  % \begin{figure}
+  %   \includegraphics<+>[width=\textwidth]{mipmap0.png}
+  %   \includegraphics<+>[width=\textwidth]{mipmap1.png}
+  %   \includegraphics<+>[width=\textwidth]{mipmap2.png}
+  %   \includegraphics<+>[width=\textwidth]{mipmap3.png}
+  %   \caption*{\only<1>{Mipmap level 0}\only<2>{Mipmap level 1}\only<3>{Mipmap level 2}\only<4>{\\Mipmap level 3}}
+  % \end{figure}
   \begin{figure}
-    \includegraphics<+>[width=\textwidth]{mipmap0.png}
-    \includegraphics<+>[width=\textwidth]{mipmap1.png}
-    \includegraphics<+>[width=\textwidth]{mipmap2.png}
-    \includegraphics<+>[width=\textwidth]{mipmap3.png}
-    \caption*{\only<1>{Mipmap level 0}\only<2>{Mipmap level 1}\only<3>{Mipmap level 2}\only<4>{\\Mipmap level 3}}
+    \centering
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mipmap0.png}
+        \caption*{Level 0}
+    \end{subfigure}
+    \hfill
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mipmap1.png}
+        \caption*{Level 1}
+    \end{subfigure}
+    % \vskip\baselineskip
+
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mipmap2.png}
+        \caption*{Level 2}
+    \end{subfigure}
+    \quad
+    \begin{subfigure}[b]{0.475\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{mipmap3.png}
+        \caption*{Level 3}
+    \end{subfigure}
+    \caption*{Mipmaps}
   \end{figure}
 \end{frame}
 
@@ -669,7 +720,7 @@
   % inputs are lights, material, and fragment (with position, normal, texture coordinates)
   % Indirect lighting is the only interesting (non-standard) one here
   \begin{description}
-    \item[Direct Lighting] sum light contributions using Cook-Torrance shading model
+    \item[Direct Lighting] Cook-Torrance shading model
     \item[Indirect Lighting] voxel cone tracing
     \item[Post Processing] tone mapping and gamma correction
   \end{description}
@@ -750,11 +801,11 @@
 
 % We use 5 cones to gather diffuse (low frequency) light and 1 cone for specular lights. The cone tracing also gives us occlusion information, which we use to attenuate the lighting.
   \begin{figure}
-    \includegraphics<+>[width=\textwidth]{conetrace1}
-    \includegraphics<+>[width=\textwidth]{conetrace2}
-    \includegraphics<+>[width=\textwidth]{conetrace3}
-    \includegraphics<+>[width=\textwidth]{conetrace4}
-    \includegraphics<+>[width=\textwidth]{conetrace5}
+    \includegraphics<+>[width=0.9\textwidth]{conetrace1}
+    \includegraphics<+>[width=0.9\textwidth]{conetrace2}
+    \includegraphics<+>[width=0.9\textwidth]{conetrace3}
+    \includegraphics<+>[width=0.9\textwidth]{conetrace4}
+    \includegraphics<+>[width=0.9\textwidth]{conetrace5}
   \end{figure}
 \end{frame}}
 
@@ -817,10 +868,21 @@
 \end{frame}
 
 \begin{frame}{Vary with distance from camera}
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
+  %   \includegraphics<2>[width=\textwidth]{rastervoxel_warp}
+  %   \caption*{\only<1>{Without warping}\only<2>{With warping}}
+  % \end{figure}
   \begin{figure}
-    \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
-    \includegraphics<2>[width=\textwidth]{rastervoxel_warp}
-    \caption*{\only<1>{Without warping}\only<2>{With warping}}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{rastervoxel_nowarp}
+      \caption*{Without warping}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{rastervoxel_warp}
+      \caption*{With warping}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
@@ -848,10 +910,21 @@
 \end{frame}
 
 \begin{frame}{Vary based on perspective}
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{tessvoxels_nowarp}
+  %   \includegraphics<2>[width=\textwidth]{tessvoxels_warp}
+  %   \caption*{\only<1>{Without warping}\only<2>{With warping}}
+  % \end{figure}
   \begin{figure}
-    \includegraphics<1>[width=\textwidth]{tessvoxels_nowarp}
-    \includegraphics<2>[width=\textwidth]{tessvoxels_warp}
-    \caption*{\only<1>{Without warping}\only<2>{With warping}}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{tessvoxels_nowarp}
+      \caption*{Without warping}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{tessvoxels_warp}
+      \caption*{With warping}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
@@ -864,19 +937,34 @@
 
 % First, and most important, test was to measure the general performance of the algorithm. We also varied the voxel grid resolution and screen resolution to see how it affected performance. Here are some screenshots of the varying voxel grid dimensions, starting at 64x64x64
 \subsection{Results}
-\begin{frame}{Performance}
+\begin{frame}{Results}
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{results_720_64}
+  %   \includegraphics<2>[width=\textwidth]{results_720_128}
+  %   \includegraphics<3>[width=\textwidth]{results_720_256}
+  %   \caption*{
+  %     \only<1>{$64^3$ voxel grid}
+  %     \only<2>{$128^3$ voxel grid}
+  %     \only<3>{\\$256^3$ voxel grid}
+  %   }
+  % \end{figure}
   \begin{figure}
-    \includegraphics<1>[width=\textwidth]{results_720_64}
-    \includegraphics<2>[width=\textwidth]{results_720_128}
-    \includegraphics<3>[width=\textwidth]{results_720_256}
-    \caption*{
-      \only<1>{$64^3$ voxel grid}
-      \only<2>{$128^3$ voxel grid}
-      \only<3>{\\$256^3$ voxel grid}
-    }
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=0.95\textwidth,trim={0 {0.1\height} {0.25\width} 0},clip]{results_720_64}
+      \caption*{$64^3$}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=0.95\textwidth,trim={0 {0.1\height} {0.25\width} 0},clip]{results_720_128}
+      \caption*{$128^3$}
+    \end{subfigure}
+
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=0.95\textwidth,trim={0 {0.1\height} {0.25\width} 0},clip]{results_720_256}
+      \caption*{$256^3$}
+    \end{subfigure}
   \end{figure}
-  % pictures of different voxel grid dimensions
-  % graphs of performance times for each
+
   % analysis (which render passes were affected by what, etc)
 \end{frame}
 
@@ -914,10 +1002,21 @@
 
 % Next we compared the results of the two voxelization algorithms. Visually, they are practically indistiguishable.
 \begin{frame}{Rasterized vs. Tessellated Voxels}
+  % \begin{figure}
+  %     \includegraphics<1>[width=\textwidth]{results_voxelraster}
+  %     \includegraphics<2>[width=\textwidth]{results_voxeltess}
+  %     \caption*{\only<1>{Rasterized voxels}\only<2>{\\Tessellated voxels}}
+  % \end{figure}
   \begin{figure}
-      \includegraphics<1>[width=\textwidth]{results_voxelraster}
-      \includegraphics<2>[width=\textwidth]{results_voxeltess}
-      \caption*{\only<1>{Rasterized voxels}\only<2>{\\Tessellated voxels}}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{results_voxelraster}
+      \caption*{Rasterized voxels}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{results_voxeltess}
+      \caption*{Tessellated voxels}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
@@ -952,24 +1051,46 @@
 
 % Lastly we evaluated our voxel warping...
 \begin{frame}{Voxel Warping}
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{voxelwarp_off}
+  %   \includegraphics<2>[width=\textwidth]{voxelwarp_on}
+  %   \caption*{
+  %     \only<1>{Without voxel warping}
+  %     \only<2>{\\With voxel warping}
+  %   }
+  % \end{figure}
   \begin{figure}
-    \includegraphics<1>[width=\textwidth]{voxelwarp_off}
-    \includegraphics<2>[width=\textwidth]{voxelwarp_on}
-    \caption*{
-      \only<1>{Without voxel warping}
-      \only<2>{\\With voxel warping}
-    }
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0 0 0},clip]{voxelwarp_off}
+      \caption*{Without voxel warping}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0 0 0},clip]{voxelwarp_on}
+      \caption*{With voxel warping}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
 \begin{frame}{Perspective Voxel Warping}
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{tesswarp_off}
+  %   \includegraphics<2>[width=\textwidth]{tesswarp_on}
+  %   \caption*{
+  %     \only<1>{Without voxel warping}
+  %     \only<2>{\\With voxel warping}
+  %   }
+  % \end{figure}
   \begin{figure}
-    \includegraphics<1>[width=\textwidth]{tesswarp_off}
-    \includegraphics<2>[width=\textwidth]{tesswarp_on}
-    \caption*{
-      \only<1>{Without voxel warping}
-      \only<2>{\\With voxel warping}
-    }
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0 0 0},clip]{tesswarp_off}
+      \caption*{Without voxel warping}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0 0 0},clip]{tesswarp_on}
+      \caption*{With voxel warping}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
