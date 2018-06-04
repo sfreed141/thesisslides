@@ -491,27 +491,28 @@
 % \end{frame}
 
 \begin{frame}{Overview of Renderer}
+  \captionsetup[subfigure]{font=footnotesize,labelfont=footnotesize}
   \begin{figure}
     \renewcommand{\thesubfigure}{\arabic{subfigure}}
     \begin{subfigure}[t]{0.32\textwidth}
-      \includegraphics[width=\textwidth]{gi_step2}
+      \adjincludegraphics[width=\textwidth, trim={{0.2\width} {0.1\height} {0.2\width} 0},clip]{gi_step2}
       \caption{Voxelize}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
-      \includegraphics[width=\textwidth]{gi_step1}
+      \adjincludegraphics[width=\textwidth, trim={{0.2\width} {0.1\height} {0.2\width} 0},clip]{gi_step1}
       \caption{Direct lighting}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
-      \includegraphics[width=\textwidth]{gi_step3}
+      \adjincludegraphics[width=\textwidth, trim={{0.2\width} {0.1\height} {0.2\width} 0},clip]{gi_step3}
       \caption{Inject direct lighting into voxels}
     \end{subfigure}
 
     \begin{subfigure}[t]{0.32\textwidth}
-      \includegraphics[width=\textwidth]{gi_step4}
+      \adjincludegraphics[width=\textwidth, trim={{0.2\width} {0.1\height} {0.2\width} 0},clip]{gi_step4}
       \caption{Filter voxels}
     \end{subfigure}
     \begin{subfigure}[t]{0.32\textwidth}
-      \includegraphics[width=\textwidth]{gi_step5}
+      \adjincludegraphics[width=\textwidth, trim={{0.2\width} {0.1\height} {0.2\width} 0},clip]{gi_step5}
       \caption{Sample using voxel cone tracing}
     \end{subfigure}
   \end{figure}
@@ -1236,6 +1237,7 @@
 
   \begin{itemize}
     \item Try to alleviate flickering with warped voxels % temporal, hole filling, voxel interpolation, snapping % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
+    \item Fully implement RSMs, LPVs, and VCT (as described in research paper) for direct comparison % can't really do this right now since there are too many differences between engines to make a fair comparison. also what assets do they use and what other techniques?
     \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
     % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
     \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality, other miscellaneous optimizations % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
