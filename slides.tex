@@ -528,6 +528,43 @@
 % }
 
 \subsection{Voxelization}
+
+{\setbeamertemplate{frame footer}{image from \href{https://www.khronos.org/opengl/wiki/Tessellation}{OpenGL Wiki}}
+\begin{frame}{Voxelization with Tessellator}
+  \begin{itemize}
+    \item Each vertex corresponds to a voxel
+    \item Triangles are subdivided into multiple vertices during tessellation
+  \end{itemize}
+
+  % Tessellation after vertex shading and before fragment shading
+  % rasterizer is not needed (is disabled)
+
+  % Tessellation is a method of programmatically subdividing input primitives (in our case triangles).
+
+  \begin{figure}
+    \adjincludegraphics[scale=0.8, trim={0 {0.1\height} 0 0},clip]{openglwiki_tesselation.png}
+  \end{figure}
+\end{frame}}
+
+\begin{frame}{Determining Tessellation Levels}
+  \begin{itemize}
+    \item Outer levels determined from respective edge lengths
+    \item Inner level determined from maximum triangle altitude length
+  \end{itemize}
+
+  % Here is an illustration of the idea behind tessellated voxelization. By subdividing the edges and inside appropriately we can get a fairly good voxelization. A nice part of this voxelization is we don't need to worry about the dominant axis or conservative rasterization.
+  \begin{figure}
+    \begin{tikzpicture}[scale=0.8]
+      \draw [gray, step=1.0] (-4, -4) grid ++(8, 8);
+      \foreach \x/\y in {-3.1/-0.2, -2.23/-0.7, -1.37/-1.2, -0.5/-1.7, 0.25/-0.65, 1.0/0.4, 1.75/1.45, 2.5/2.5, 1.57/2.05, 0.63/1.6, -0.3/1.15, -1.23/0.7, -2.17/0.25, -1.31/-0.28, -0.19/0.26, -0.69/-0.58}{
+        \fill[thick, black] (\x, \y) circle (0.1cm);
+      }
+      \draw [black] (-3.1, -0.2) -- (2.5, 2.5) -- (-0.5, -1.7) -- cycle;
+      \draw [black] (-1.31, -0.28) -- (-0.19, 0.26) -- (-0.69, -0.58) -- cycle;
+    \end{tikzpicture}
+  \end{figure}
+\end{frame}
+
 {\setbeamertemplate{frame footer}{image from \href{https://www.seas.upenn.edu/~pcozzi/OpenGLInsights/OpenGLInsights-SparseVoxelization.pdf}{OpenGL Insights: Octree-Based Sparse Voxelization Using the GPU Hardware Rasterizer} by Cyril Crassin and Simon Green}
 \begin{frame}{Voxelization with Rasterizer}
   Each fragment corresponds to a voxel
@@ -571,61 +608,6 @@
   \end{figure}
 \end{frame}
 
-{\setbeamertemplate{frame footer}{image from \href{https://www.khronos.org/opengl/wiki/Tessellation}{OpenGL Wiki}}
-\begin{frame}{Voxelization with Tessellator}
-  Idea: Generate a \textit{vertex} for each voxel instead of a fragment
-
-  % Tessellation after vertex shading and before fragment shading
-  % rasterizer is not needed (is disabled)
-
-  % Tessellation is a method of programmatically subdividing input primitives (in our case triangles).
-
-  \begin{figure}
-    \includegraphics[scale=0.8]{openglwiki_tesselation.png}
-  \end{figure}
-\end{frame}}
-
-\begin{frame}{Determining Tessellation Levels}
-  Outer levels determined from respective edge lengths
-
-  Inner level determined from maximum triangle altitude length
-
-  % Here is an illustration of the idea behind tessellated voxelization. By subdividing the edges and inside appropriately we can get a fairly good voxelization. A nice part of this voxelization is we don't need to worry about the dominant axis or conservative rasterization.
-  \begin{figure}
-    \begin{tikzpicture}[scale=0.8]
-      \draw [gray, step=1.0] (-4, -4) grid ++(8, 8);
-      \foreach \x/\y in {-3.1/-0.2, -2.23/-0.7, -1.37/-1.2, -0.5/-1.7, 0.25/-0.65, 1.0/0.4, 1.75/1.45, 2.5/2.5, 1.57/2.05, 0.63/1.6, -0.3/1.15, -1.23/0.7, -2.17/0.25, -1.31/-0.28, -0.19/0.26, -0.69/-0.58}{
-        \fill[thick, black] (\x, \y) circle (0.1cm);
-      }
-      \draw [black] (-3.1, -0.2) -- (2.5, 2.5) -- (-0.5, -1.7) -- cycle;
-      \draw [black] (-1.31, -0.28) -- (-0.19, 0.26) -- (-0.69, -0.58) -- cycle;
-    \end{tikzpicture}
-  \end{figure}
-\end{frame}
-
-\begin{frame}{Voxelized Scene}
-  % Opacity, color, and normals are stored in voxel textures. Since multiple shader invocations can write to the same voxel we need to use atomic operations. Both an atomic max and atomic average are supported.
-
-  % Here's the scene colored using the rasterized voxel values. You can see some of spots where conservative rasterization didn't work completely.
-  % And here are the tessellated voxels. Parts of it seem higher resolution due to not having the rasterizer produce the fragments. Also the spots where conservative rasterization didn't work well aren't an issue here. The kinda unfortunate problem though are the cracks, which are caused when the tessellation level can't get high enough, which is a hardware limitation. A possible workaround for this would be to split any large triangles when initially loading the meshes. Luckily since we'll be filtering this later most of these cracks aren't too noticeable.
-  % \begin{figure}
-  %   \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
-  %   \includegraphics<2>[width=\textwidth]{tessvoxels_nowarp}
-  %   \caption*{\only<1>{Scene colored with rasterized voxels}\only<2>{\\Scene colored with tessellated voxels}}
-  % \end{figure}
-  \begin{figure}
-    \begin{subfigure}[t]{0.475\textwidth}
-      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{rastervoxel_nowarp}
-      \caption*{Rasterized voxels}
-    \end{subfigure}
-    ~
-    \begin{subfigure}[t]{0.475\textwidth}
-      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{tessvoxels_nowarp}
-      \caption*{Tessellated voxels}
-    \end{subfigure}
-  \end{figure}
-\end{frame}
-
 \subsection{Radiance Injection and Filtering}
 % \begin{frame}{Radiance Injection}
 %   \begin{itemize}
@@ -650,13 +632,13 @@
   %   \includegraphics[width=0.8\textwidth]{shadowmap}
   % \end{figure}
   \begin{figure}
-    \begin{subfigure}[t]{0.475\textwidth}
-      \includegraphics[width=\textwidth]{lightinjection}
-    \end{subfigure}
-    ~
-    \begin{subfigure}[t]{0.475\textwidth}
-      \adjincludegraphics[width=\textwidth,trim={{0.1\width} 0 {0.1\width} 0},clip]{shadowmap}
-    \end{subfigure}
+    % \begin{subfigure}[t]{0.475\textwidth}
+    %   \includegraphics[width=\textwidth]{lightinjection}
+    % \end{subfigure}
+    % ~
+    % \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=0.8\textwidth,trim={{0.1\width} 0 {0.1\width} 0},clip]{shadowmap}
+    % \end{subfigure}
   \end{figure}
 \end{frame}}
 
@@ -763,45 +745,45 @@
 % \end{frame}
 
 % Computing the direct lighting is fairly straightforward: we loop through each light and, if the light source isn't being blocked by anything, add the lighting contribution. This computeLighting is based on material properties, light color and intensity, and these vectors: the view vector, surface normal, and light vector.
-\begin{frame}{Direct Lighting}
-  % psuedocode? or just picture of direct light and explain?
-  \begin{algorithm}[H]
-    \begin{algorithmic}
-      \State {color = 0}
-      \For {each light in the scene}
-        \If {not in shadow}
-          \State {color += computeLighting()}
-        \EndIf
-      \EndFor
-    \end{algorithmic}
-  \end{algorithm}
+% \begin{frame}{Direct Lighting}
+%   % psuedocode? or just picture of direct light and explain?
+%   \begin{algorithm}[H]
+%     \begin{algorithmic}
+%       \State {color = 0}
+%       \For {each light in the scene}
+%         \If {not in shadow}
+%           \State {color += computeLighting()}
+%         \EndIf
+%       \EndFor
+%     \end{algorithmic}
+%   \end{algorithm}
 
-  \begin{figure}
-    \begin{tikzpicture}[scale=0.7]
-      \draw (2, 0) arc (0:180:2);
-      \draw (0, 0) ellipse (2cm and 0.5cm);
+%   \begin{figure}
+%     \begin{tikzpicture}[scale=0.7]
+%       \draw (2, 0) arc (0:180:2);
+%       \draw (0, 0) ellipse (2cm and 0.5cm);
 
-      \fill (0, 0) circle (0.05cm) node[below] (x) {$x$};
+%       \fill (0, 0) circle (0.05cm) node[below] (x) {$x$};
 
-      \draw[->] (0, 0) -- (30:3cm) node[above right] {$\bm{v}$};
-      \draw[->] (0, 0) -- (90:3cm) node[above] {$\bm{n}$};
-      \draw[->] (0, 0) -- (120:3cm) node[above left] {$\bm{l_{direct}}$};
+%       \draw[->] (0, 0) -- (30:3cm) node[above right] {$\bm{v}$};
+%       \draw[->] (0, 0) -- (90:3cm) node[above] {$\bm{n}$};
+%       \draw[->] (0, 0) -- (120:3cm) node[above left] {$\bm{l_{direct}}$};
 
-      \path (30:5cm) coordinate (camera);
-      \fill (camera) circle (0.1cm) node[above] {Camera};
+%       \path (30:5cm) coordinate (camera);
+%       \fill (camera) circle (0.1cm) node[above] {Camera};
 
-      \path (120:5cm) coordinate (light);
-      \fill (light) circle (0.1cm) node[above] {Light Source};
-    \end{tikzpicture}
-  \end{figure}
-\end{frame}
+%       \path (120:5cm) coordinate (light);
+%       \fill (light) circle (0.1cm) node[above] {Light Source};
+%     \end{tikzpicture}
+%   \end{figure}
+% \end{frame}
 
-\begin{frame}{Direct Lighting}
-  \begin{figure}
-    \includegraphics[width=\textwidth]{debugDirect}
-    \caption*{Direct Lighting}
-  \end{figure}
-\end{frame}
+% \begin{frame}{Direct Lighting}
+%   \begin{figure}
+%     \includegraphics[width=\textwidth]{debugDirect}
+%     \caption*{Direct Lighting}
+%   \end{figure}
+% \end{frame}
 
 {\setbeamertemplate{frame footer}{image from Christian Eckhardt}
 \begin{frame}{Indirect Lighting---Voxel Cone Tracing}
@@ -910,6 +892,7 @@
       \end{axis}
     \end{tikzpicture}
   \end{figure}
+
 \end{frame}
 
 \begin{frame}{Vary with distance from camera}
@@ -1018,16 +1001,26 @@
 \begin{frame}{Performance}
   \begin{figure}
     \pgfplotstableread[row sep=\\]{
-      Resolution Voxelize Shadowmap Inject Filter Prepass Shading\\
-      720p64 0.90  0.69  0.92  0.04  0.20  3.89\\
-      720p128 1.13  0.69  0.92  0.10  0.20  4.81\\
-      720p256 2.40  0.69  0.93  0.55  0.20  5.32\\
-      900p64 0.70  0.69  0.92  0.05  0.25  5.98\\
-      900p128 1.12  0.69  0.92  0.10  0.26  6.42\\
-      900p256 2.39  0.69  0.93  0.56  0.25  7.10\\
-      1080p64 0.72  0.68  0.92  0.04  0.31  8.28\\
-      1080p128 1.15  0.68  0.92  0.10  0.31  9.40\\
-      1080p256 2.41  0.69  0.93  0.55  0.36  9.75\\
+      % Resolution Voxelize Shadowmap Inject Filter Prepass Shading\\
+      % 720p64 0.90  0.69  0.92  0.04  0.20  3.89\\
+      % 720p128 1.13  0.69  0.92  0.10  0.20  4.81\\
+      % 720p256 2.40  0.69  0.93  0.55  0.20  5.32\\
+      % 900p64 0.70  0.69  0.92  0.05  0.25  5.98\\
+      % 900p128 1.12  0.69  0.92  0.10  0.26  6.42\\
+      % 900p256 2.39  0.69  0.93  0.56  0.25  7.10\\
+      % 1080p64 0.72  0.68  0.92  0.04  0.31  8.28\\
+      % 1080p128 1.15  0.68  0.92  0.10  0.31  9.40\\
+      % 1080p256 2.41  0.69  0.93  0.55  0.36  9.75\\
+      Resolution Voxelize Shadowmap Inject Filter Shading\\
+      720p64 0.90  0.69  0.92  0.04  4.09\\
+      720p128 1.13  0.69  0.92  0.10  5.01\\
+      720p256 2.40  0.69  0.93  0.55  5.52\\
+      900p64 0.70  0.69  0.92  0.05  6.23\\
+      900p128 1.12  0.69  0.92  0.10  6.68\\
+      900p256 2.39  0.69  0.93  0.56  7.35\\
+      1080p64 0.72  0.68  0.92  0.04  8.59\\
+      1080p128 1.15  0.68  0.92  0.10  9.71\\
+      1080p256 2.41  0.69  0.93  0.55  10.01\\
     }\dataset
     \begin{tikzpicture}[scale=0.9]
       \begin{axis}[nodes near coords ybar stacked configuration/.style={},ybar stacked, symbolic x coords={720p64, 720p128, 720p256, 900p64, 900p128, 900p256, 1080p64, 1080p128, 1080p256}, xtick=data, xticklabel style={rotate=45}, legend style={at={(1.05,0.5)}, anchor=west}, xlabel={Screen Resolution x Voxel Grid Size}, ylabel={Time (ms)}, enlarge y limits={0.2, upper}, title={Frame Times}, ymin=0]
@@ -1035,13 +1028,37 @@
         \addplot table[meta=Resolution, y=Shadowmap] \dataset;
         \addplot table[meta=Resolution, y=Inject] \dataset;
         \addplot table[meta=Resolution, y=Filter] \dataset;
-        \addplot table[meta=Resolution, y=Prepass] \dataset;
+        % \addplot table[meta=Resolution, y=Prepass] \dataset;
         \addplot[point meta=y, nodes near coords, nodes near coords align={above}, nodes near coords style={/pgf/number format/.cd, fixed zerofill, precision=1}] table[meta=Resolution, y=Shading] \dataset;
 
-        \legend{Voxelize, Shadowmap, Radiance Injection, Radiance Filtering, Depth Prepass, Final Shading}
+        % \legend{Voxelize, Shadowmap, Radiance Injection, Radiance Filtering, Depth Prepass, Final Shading}
+        \legend{Voxelize, Shadowmap, Radiance Injection, Radiance Filtering, Final Shading}
         % TODO try to get nested xticklabel
       \end{axis}
     \end{tikzpicture}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Rasterized vs. Tessellated Voxels}
+  % Opacity, color, and normals are stored in voxel textures. Since multiple shader invocations can write to the same voxel we need to use atomic operations. Both an atomic max and atomic average are supported.
+
+  % Here's the scene colored using the rasterized voxel values. You can see some of spots where conservative rasterization didn't work completely.
+  % And here are the tessellated voxels. Parts of it seem higher resolution due to not having the rasterizer produce the fragments. Also the spots where conservative rasterization didn't work well aren't an issue here. The kinda unfortunate problem though are the cracks, which are caused when the tessellation level can't get high enough, which is a hardware limitation. A possible workaround for this would be to split any large triangles when initially loading the meshes. Luckily since we'll be filtering this later most of these cracks aren't too noticeable.
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
+  %   \includegraphics<2>[width=\textwidth]{tessvoxels_nowarp}
+  %   \caption*{\only<1>{Scene colored with rasterized voxels}\only<2>{\\Scene colored with tessellated voxels}}
+  % \end{figure}
+  \begin{figure}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{rastervoxel_nowarp}
+      \caption*{Rasterized voxels}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{tessvoxels_nowarp}
+      \caption*{Tessellated voxels}
+    \end{subfigure}
   \end{figure}
 \end{frame}
 
@@ -1139,6 +1156,13 @@
   \end{figure}
 \end{frame}
 
+\begin{frame}{Voxel Warping}
+  \begin{itemize}
+    \item Adaptively change voxel resolution
+    \item Bad artifacts when objects move (looking into ways to fix this) % when the voxel sizes are discrete we can snap the voxel grid to eliminate flickering. If the voxel sizes are continuous we can't do this. We tried a couple things like temporal filtering to make this better but it still isn't great. (part of future work)
+  \end{itemize}
+\end{frame}
+
 % \newcommand{\smallcolumns}[4][0.5, 0.5]{\begin{columns}\begin{column}{#1\textwidth}#3\end{column}\begin{column}{#2\textwidth}#4\end{column}\end{columns}}
 \subsection{Related Work}
 \begin{frame}{Related Work}
@@ -1154,21 +1178,21 @@
   \end{enumerate}
 \end{frame}
 
-{\setbeamertemplate{frame footer}{image from \href{https://dl.acm.org/citation.cfm?id=1053460}{Reflective shadow maps} by C.\ Dachsbacher and M.\ Stamminger}
-\begin{frame}{Related Work---Reflective Shadowmaps}
-  \begin{enumerate}
-    \item Scene representation? \alert{Reflective shadowmap (RSM)}% reused from shadowmap
-    \item Light computation? \alert{None, use color and normal from RSM}% normal and color stored along with shadowmap
-    \item Light sampling? \alert{Sample nearby points in RSM} % project point into the RSM and sample nearby points
-  \end{enumerate}
+% {\setbeamertemplate{frame footer}{image from \href{https://dl.acm.org/citation.cfm?id=1053460}{Reflective shadow maps} by C.\ Dachsbacher and M.\ Stamminger}
+% \begin{frame}{Related Work---Reflective Shadowmaps}
+%   \begin{enumerate}
+%     \item Scene representation? \alert{Reflective shadowmap (RSM)}% reused from shadowmap
+%     \item Light computation? \alert{None, use color and normal from RSM}% normal and color stored along with shadowmap
+%     \item Light sampling? \alert{Sample nearby points in RSM} % project point into the RSM and sample nearby points
+%   \end{enumerate}
 
-  \begin{figure}
-    \includegraphics[width=\textwidth]{rsm}
-  \end{figure}
+%   \begin{figure}
+%     \includegraphics[width=\textwidth]{rsm}
+%   \end{figure}
 
-  % pros straighforward, doesn't require any fancy data structures
-  % cons no occlusion information and complexity linear wrt number of lights, no specular
-\end{frame}}
+%   % pros straighforward, doesn't require any fancy data structures
+%   % cons no occlusion information and complexity linear wrt number of lights, no specular
+% \end{frame}}
 
 {\setbeamertemplate{frame footer}{image from \href{http://www.crytek.com/download/Light_Propagation_Volumes.pdf}{Light Propagation Volumes in CryEngine 3} by A.\ Kaplanyan}
 \begin{frame}{Related Work---Light Propagation Volumes}
@@ -1237,7 +1261,7 @@
 
   \begin{itemize}
     \item Try to alleviate flickering with warped voxels % temporal, hole filling, voxel interpolation, snapping % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
-    \item Fully implement RSMs, LPVs, and VCT (as described in research paper) for direct comparison % can't really do this right now since there are too many differences between engines to make a fair comparison. also what assets do they use and what other techniques?
+    \item Fully implement LPVs and VCT (as described in research paper) for direct comparison % can't really do this right now since there are too many differences between engines to make a fair comparison. also what assets do they use and what other techniques?
     \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
     % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
     \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality, other miscellaneous optimizations % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
