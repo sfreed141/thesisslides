@@ -47,7 +47,11 @@
 
 \begin{document}
 
-\frame{\titlepage}
+% \frame{\titlepage}
+{\setbeamertemplate{footline}{}
+\begin{frame}[noframenumbering]
+  \titlepage
+\end{frame}
 
 
 % OVERALL GUIDELINES (from Christian)
@@ -61,10 +65,10 @@
 
 
 % Go over outlines of presentation. Mention the subsections briefly as appropriate.
-\begin{frame}{Outline}
+\begin{frame}[noframenumbering]{Outline}
   \setbeamertemplate{section in toc}[sections numbered]
   \tableofcontents[hideallsubsections]
-\end{frame}
+\end{frame}}
 
 \setbeamertemplate{frametitle continuation}{}
 
@@ -129,8 +133,8 @@
 \subsection{Contributions}
 \begin{frame}{Contributions}
   \begin{itemize}
-    \item Open-source, cross-platform implementation of real-time global illumination (using voxel cone tracing) % except for apple since they don't like opengl. the big goal here is for others to be able to work on it and do cool stuff (jaafer already used the vct part :) ). voxel cone tracing is the general technique used to achieve gi
-    \item Comparison of two different methods of scene voxelization (rasterization vs.\ tessellation)% voxelization is an important part of many new gi algorithms so we wanted to compare two different methods
+    \item Open-source, cross-platform implementation of real-time global illumination % except for apple since they don't like opengl. the big goal here is for others to be able to work on it and do cool stuff (jaafer already used the vct part :) ). voxel cone tracing is the general technique used to achieve gi
+    \item Comparison of two different methods of scene voxelization % voxelization is an important part of many new gi algorithms so we wanted to compare two different methods
     \item Investigation into warped (nonuniform size) voxels % more on this later, first I'd like to give a crash course in graphics and an overview of other solutions to real time gi
   \end{itemize}
 \end{frame}
@@ -334,7 +338,7 @@
 
   \begin{description}
     \item[Constant] Fixed fraction of ambient light % as seen in first image
-    \item[Partial] Ambient occlusion, soft shadows, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
+    \item[Partial] Ambient occlusion, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
     \item[Static] Baked lighting, light probes
     \item[Dynamic] Reflective Shadowmaps, Light Propagation Volumes, Voxel Cone Tracing
   \end{description}
@@ -439,53 +443,79 @@
 % TODO quick recap here?
 % most important bits: voxels represent 3d data well and thus voxelization is important; vpls are core part of most gi algorithms; lpv and vct use regular grid
 
-\begin{frame}{What am I doing?} % this is the research question
-  % common theme is constructing some (ideally 3D) representation of a scene
-  % we wanted to evaluate an alternate method of voxelization and to see if nonuniform voxel sizes were a promising alternative to existing 3D data structures
-  \begin{enumerate}
-    \item Comparing two approaches for scene voxelization % voxelization is a core part of the algorithm; tessellated version also not restricted to rasterizer
-    \item Investigating continuous voxel sizes % voxel warping; idea is to support bigger scenes and increase resolution near camera without abrupt changes in voxel density
-  \end{enumerate}
-\end{frame}
+% \begin{frame}{What am I doing?} % this is the research question
+%   % common theme is constructing some (ideally 3D) representation of a scene
+%   % we wanted to evaluate an alternate method of voxelization and to see if nonuniform voxel sizes were a promising alternative to existing 3D data structures
+%   \begin{enumerate}
+%     \item Comparing two approaches for scene voxelization % voxelization is a core part of the algorithm; tessellated version also not restricted to rasterizer
+%     \item Investigating continuous voxel sizes % voxel warping; idea is to support bigger scenes and increase resolution near camera without abrupt changes in voxel density
+%   \end{enumerate}
+% \end{frame}
 
 \section{Implementation}
 
+% \begin{frame}{Overview of Renderer}
+%   % flowchart or something showing each render pass
+%   % list of all major resources (3ish voxel textures, shadowmap, meshes, materials)
+
+%   % Really what we have is a forward style rendering engine with support for rigid body animation, multiple lights, normal mapping, shadows, and of course global illumination
+
+%   % Step 2 is creating our scene representation
+%   % Steps 3, 4, and 5 are computing the indirect lighting information, which we call the radiance texture
+%   % Step 6 is where we collect/sample the indirect lighting
+%   \begin{columns}
+%     \begin{column}{0.5\textwidth}
+%       \begin{block}{Main Steps}
+%         \begin{enumerate}
+%           \item Setup (load scene, create textures, compile shaders)
+%           \item Voxelize Scene
+%           \item Create Shadowmap
+%           \item Inject Radiance
+%           \item Filter Radiance
+%           % \item Depth Prepass
+%           \item Shading
+%         \end{enumerate}
+%       \end{block}
+%     \end{column}
+%     \begin{column}{0.5\textwidth}
+%       \begin{block}{Important Data}
+%         \begin{enumerate}
+%           \item Scene (meshes, materials, lights)
+%           \item Camera (position, direction) %, projection + view matrices)
+%           \item Shadowmap % Framebuffer Object and Texture
+%           \item Voxel Textures (color + opacity, normals, radiance)
+%         \end{enumerate}
+%       \end{block}
+%     \end{column}
+%   \end{columns}
+% \end{frame}
+
 \begin{frame}{Overview of Renderer}
-  % flowchart or something showing each render pass
-  % list of all major resources (3ish voxel textures, shadowmap, meshes, materials)
+  \begin{figure}
+    \renewcommand{\thesubfigure}{\arabic{subfigure}}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \includegraphics[width=\textwidth]{gi_step2}
+      \caption{Voxelize}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \includegraphics[width=\textwidth]{gi_step1}
+      \caption{Direct lighting}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \includegraphics[width=\textwidth]{gi_step3}
+      \caption{Inject direct lighting into voxels}
+    \end{subfigure}
 
-  % Really what we have is a forward style rendering engine with support for rigid body animation, multiple lights, normal mapping, shadows, and of course global illumination
-
-  % Step 2 is creating our scene representation
-  % Steps 3, 4, and 5 are computing the indirect lighting information, which we call the radiance texture
-  % Step 6 is where we collect/sample the indirect lighting
-  \begin{columns}
-    \begin{column}{0.5\textwidth}
-      \begin{block}{Main Steps}
-        \begin{enumerate}
-          \item Setup (load scene, create textures, compile shaders)
-          \item Voxelize Scene
-          \item Create Shadowmap
-          \item Inject Radiance
-          \item Filter Radiance
-          % \item Depth Prepass
-          \item Shading
-        \end{enumerate}
-      \end{block}
-    \end{column}
-    \begin{column}{0.5\textwidth}
-      \begin{block}{Important Data}
-        \begin{enumerate}
-          \item Scene (meshes, materials, lights)
-          \item Camera (position, direction) %, projection + view matrices)
-          \item Shadowmap % Framebuffer Object and Texture
-          \item Voxel Textures (color + opacity, normals, radiance)
-        \end{enumerate}
-      \end{block}
-    \end{column}
-  \end{columns}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \includegraphics[width=\textwidth]{gi_step4}
+      \caption{Filter voxels}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.32\textwidth}
+      \includegraphics[width=\textwidth]{gi_step5}
+      \caption{Sample using voxel cone tracing}
+    \end{subfigure}
+  \end{figure}
 \end{frame}
-
 
 % \AtBeginSubsection[]
 % {
@@ -585,12 +615,12 @@
   \begin{figure}
     \begin{subfigure}[t]{0.475\textwidth}
       \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{rastervoxel_nowarp}
-      \caption*{Off}
+      \caption*{Rasterized voxels}
     \end{subfigure}
     ~
     \begin{subfigure}[t]{0.475\textwidth}
       \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0},clip]{tessvoxels_nowarp}
-      \caption*{On}
+      \caption*{Tessellated voxels}
     \end{subfigure}
   \end{figure}
 \end{frame}
@@ -607,23 +637,31 @@
 %   \end{figure}
 % \end{frame}
 
-\begin{frame}{Radiance Injection---Shadow Mapping}
-  To determine where the virtual point lights (indirect light sources) should be, we use a \textbf{shadowmap}.
-
-  Render the scene from the \textit{light}'s point of view.
+{\setbeamertemplate{frame footer}{left image from \href{http://on-demand.gputechconf.com/gtc/2014/presentations/S4552-rt-voxel-based-global-illumination-gpus.pdf}{Practical Real-time Voxel-based Global Illumination for Current GPUs} by Alexey Panteleev}
+\begin{frame}{Radiance Injection}
+  Use \textbf{shadowmap} to determine where direct light hits voxels
 
   % Only interested in depth values important for us: along with the light matrix we can reconstruct world positions
   % picture
   % implementation? ortho matrix, projection
 
+  % \begin{figure}
+  %   \includegraphics[width=0.8\textwidth]{shadowmap}
+  % \end{figure}
   \begin{figure}
-    \includegraphics[width=0.8\textwidth]{shadowmap}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \includegraphics[width=\textwidth]{lightinjection}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={{0.1\width} 0 {0.1\width} 0},clip]{shadowmap}
+    \end{subfigure}
   \end{figure}
-\end{frame}
+\end{frame}}
 
 {\setbeamertemplate{frame footer}{left image from \href{http://on-demand.gputechconf.com/gtc/2014/presentations/S4552-rt-voxel-based-global-illumination-gpus.pdf}{Practical Real-time Voxel-based Global Illumination for Current GPUs} by Alexey Panteleev}
-\begin{frame}{Radiance Injection---Injecting VPLs}
-  Insert the corresponding color into radiance texture from shadowmap.
+\begin{frame}{Radiance Injection}
+  Use \textbf{shadowmap} to determine where direct light hits voxels
 
   \begin{figure}
     \begin{subfigure}[t]{0.475\textwidth}
@@ -715,16 +753,13 @@
 %   %Prefill the depth buffer so lighting (including the relatively expensive voxel cone tracing) will only be performed on the visible fragments of the scene. % remind of depth test and this is only for forward rendering (deferred already does this when creating gbuffer)
 % \end{frame}
 
-\begin{frame}{Final Shading}
-  % outline (direct + diffuse indirect + specular indirect)
-  % inputs are lights, material, and fragment (with position, normal, texture coordinates)
-  % Indirect lighting is the only interesting (non-standard) one here
-  \begin{description}
-    \item[Direct Lighting] Cook-Torrance shading model
-    \item[Indirect Lighting] voxel cone tracing
-    \item[Post Processing] tone mapping and gamma correction
-  \end{description}
-\end{frame}
+% \begin{frame}{Final Shading}
+%   \begin{description}
+%     \item[Direct Lighting] Cook-Torrance shading model
+%     \item[Indirect Lighting] voxel cone tracing
+%     \item[Post Processing] tone mapping and gamma correction
+%   \end{description}
+% \end{frame}
 
 % Computing the direct lighting is fairly straightforward: we loop through each light and, if the light source isn't being blocked by anything, add the lighting contribution. This computeLighting is based on material properties, light color and intensity, and these vectors: the view vector, surface normal, and light vector.
 \begin{frame}{Direct Lighting}
@@ -768,12 +803,12 @@
 \end{frame}
 
 {\setbeamertemplate{frame footer}{image from Christian Eckhardt}
-\begin{frame}{Indirect Lighting}
+\begin{frame}{Indirect Lighting---Voxel Cone Tracing}
   % \begin{columns}
   %   \begin{column}{0.5\textwidth}
       \begin{block}{Voxel Cone Tracing}
         \begin{enumerate}
-          \item Sample light from the radiance texture along a particular direction
+          \item Sample light and occlusion from the radiance texture along a particular direction
           \item Adjust level of detail as we get farther from sample point
         \end{enumerate}
       \end{block}
@@ -788,8 +823,10 @@
   % \end{columns}
 \end{frame}}
 
+
+
 {\setbeamertemplate{frame footer}{image from Christian Eckhardt}
-\begin{frame}{Voxel Cone Tracing}
+\begin{frame}{Indirect Lighting---Voxel Cone Tracing}
 % explain voxel cone tracing
 % the idea (raymarching + mipmaps), choosing cone angles + dirs, diffuse indirect, specular indirect, cone tracing itself
 
@@ -806,6 +843,13 @@
     \includegraphics<+>[width=0.9\textwidth]{conetrace3}
     \includegraphics<+>[width=0.9\textwidth]{conetrace4}
     \includegraphics<+>[width=0.9\textwidth]{conetrace5}
+  \end{figure}
+\end{frame}}
+
+{\setbeamertemplate{frame footer}{image from \href{http://on-demand.gputechconf.com/gtc/2014/presentations/S4552-rt-voxel-based-global-illumination-gpus.pdf}{Practical Real-time Voxel-based Global Illumination for Current GPUs} by Alexey Panteleev}
+\begin{frame}{Indirect Lighting---Voxel Cone Tracing}
+  \begin{figure}
+    \includegraphics[width=\textwidth]{coneangles}
   \end{figure}
 \end{frame}}
 
@@ -1043,8 +1087,8 @@
 \begin{frame}{Rasterized vs. Tessellated Voxels}
   \begin{block}{Summary}
     \begin{description}
-      \item[Rasterized:] slightly faster, conservative rasterization, dominant axis projection, precision limited by fragments
-      \item[Tessellated:] easier to implement, full precision, max triangle size limited by hardware
+      \item[Rasterized:] limited by rasterizer, slightly faster
+      \item[Tessellated:] limited by hardware, easier to implement
     \end{description}
   \end{block}
 \end{frame}
@@ -1146,7 +1190,7 @@
 {\setbeamertemplate{frame footer}{image from \href{http://research.nvidia.com/sites/default/files/pubs/2011-09_Interactive-Indirect-Illumination/GIVoxels-pg2011-authors.pdf}{Interactive Indirect Illumination Using Voxel Cone Tracing} by C.\ Crassin et al.}
 \begin{frame}{Related Work---Voxel Cone Tracing}
   \begin{enumerate}
-    \item Scene representation? \alert{Sparse voxel octree (or clipmap)}% high resolution voxel grid (in sparse voxel octree, in vxgi in clipmap). also this is where the rasterized voxelization approach came from
+    \item Scene representation? \alert{Sparse voxel octree}% high resolution voxel grid (in sparse voxel octree, in vxgi in clipmap). also this is where the rasterized voxelization approach came from
     \item Light computation? \alert{Mipmaps} % make mipmaps, the same as our implementation
     \item Light sampling? \alert{Voxel cone tracing} % voxel cone tracing
   \end{enumerate}
@@ -1160,18 +1204,18 @@
   % cons octree is complicated (especially if scene is dynamic since octree nodes need to be managed well), clipmap also somewhat complex and still uses lots of memory
 \end{frame}}
 
-\begin{frame}{Related Work---Ours}
-  \begin{enumerate}
-    \item Scene representation? \alert{Warped voxel grid} % high resolution voxel grid (in warped 3D texture). tessellated voxelization (side note: we briefly checked if this had been done already and didn't find anything at first. after implementing it we looked again and found a single paper on ACM from 2012 with a citation count of 0 and 252 cumulative downloads ever)
-    \item Light computation? \alert{Mipmaps} % make mipmaps
-    \item Light sampling? \alert{Voxel cone tracing} % voxel cone tracing
-  \end{enumerate}
+% \begin{frame}{Related Work---Ours}
+%   \begin{enumerate}
+%     \item Scene representation? \alert{Warped voxel grid} % high resolution voxel grid (in warped 3D texture). tessellated voxelization (side note: we briefly checked if this had been done already and didn't find anything at first. after implementing it we looked again and found a single paper on ACM from 2012 with a citation count of 0 and 252 cumulative downloads ever)
+%     \item Light computation? \alert{Mipmaps} % make mipmaps
+%     \item Light sampling? \alert{Voxel cone tracing} % voxel cone tracing
+%   \end{enumerate}
 
-  % So what we really gained from looking into the voxelization is that warped voxels might be viable if the temporal issues can be fixed. The tessellated voxelization might help with that since we can work with the arbitrary vertex coordinates instead of having to effectively truncate them to rasterized fragments (we don't lose precision)
+%   % So what we really gained from looking into the voxelization is that warped voxels might be viable if the temporal issues can be fixed. The tessellated voxelization might help with that since we can work with the arbitrary vertex coordinates instead of having to effectively truncate them to rasterized fragments (we don't lose precision)
 
-  % pros simple, has specular, adaptive resolution
-  % cons warping suffers from flickering
-\end{frame}
+%   % pros simple, has specular, adaptive resolution
+%   % cons warping suffers from flickering
+% \end{frame}
 
 % TODO related works summary slide? pros/cons on each related work slide?
 
@@ -1191,8 +1235,8 @@
   % Follow ups for voxelization and voxel warping, then general improvements
 
   \begin{itemize}
+    \item Try to alleviate flickering with warped voxels % temporal, hole filling, voxel interpolation, snapping % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
     \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
-    \item Take advantage of tessellated voxelization to try to resolve temporal artifacts % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
     % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
     \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality, other miscellaneous optimizations % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
   \end{itemize}
