@@ -865,31 +865,48 @@
 \end{frame}
 
 \begin{frame}{Vary with distance from camera}
-  \begin{enumerate}
-    \item Find voxel position normalized to $[0, 1]$
-    \item Apply `warping' function $w: [0, 1] \rightarrow [0, 1]$
-  \end{enumerate}
+  % \begin{enumerate}
+  %   \item Find voxel position normalized to $[0, 1]$
+  %   \item Apply `warping' function $w: [0, 1] \rightarrow [0, 1]$
+  % \end{enumerate}
 
-  The camera is in the middle ($x = 0.5$)
+  % The camera is in the middle ($x = 0.5$)
 
   \begin{figure}
-    \begin{tikzpicture}[scale=0.8]
-      \begin{axis}[
-        xlabel = {linear position},
-        ylabel = {warped position},
-        title = {Voxel Warp Function},
-        xmin = 0, ymin = 0, xmax = 1, ymax = 1,
-      %   extra x ticks={0.5},
-      %   extra x tick style={tick label style={anchor=south}},
-      %   extra x tick labels={camera}
-      ]
-        \addplot[
-          domain=0:1,
-          samples=100,
-        ]{0.25 * x + (3 - 3 * 0.25) * x * x + (2 * 0.25 - 2) * x * x * x};
-        \draw[dashed] (axis cs:0.4, 0.0) -- (axis cs:0.4, 0.364) -- (axis cs:0.0, 0.364);
-        \draw[dashed] (axis cs:0.6, 0.0) -- (axis cs:0.6, 0.636) -- (axis cs:0.0, 0.636);
-      \end{axis}
+    % \begin{tikzpicture}[scale=0.8]
+    %   \begin{axis}[
+    %     xlabel = {linear position},
+    %     ylabel = {warped position},
+    %     title = {Voxel Warp Function},
+    %     xmin = 0, ymin = 0, xmax = 1, ymax = 1,
+    %   %   extra x ticks={0.5},
+    %   %   extra x tick style={tick label style={anchor=south}},
+    %   %   extra x tick labels={camera}
+    %   ]
+    %     \addplot[
+    %       domain=0:1,
+    %       samples=100,
+    %     ]{0.25 * x + (3 - 3 * 0.25) * x * x + (2 * 0.25 - 2) * x * x * x};
+    %     \draw[dashed] (axis cs:0.4, 0.0) -- (axis cs:0.4, 0.364) -- (axis cs:0.0, 0.364);
+    %     \draw[dashed] (axis cs:0.6, 0.0) -- (axis cs:0.6, 0.636) -- (axis cs:0.0, 0.636);
+    %   \end{axis}
+    % \end{tikzpicture}
+
+    \begin{tikzpicture}
+      \path (2, 1.4) node[anchor=south] {Voxel Warping (with 4 voxels)};
+
+      \draw[black,yshift=0.7cm,xscale=4] (0, 0) rectangle (0.25, 0.5) rectangle (0.5, 0) rectangle (0.75, 0.5) rectangle (1, 0);
+
+      \draw[black,xscale=4] (0, 0) rectangle (0.15, 0.5) rectangle (0.35, 0) rectangle (0.65, 0.5) rectangle (1, 0);
+
+      \path[yshift=0.7cm] (0, 0.25) node[anchor=east] {Nonwarped};
+      \path (0, 0.25) node[anchor=east] {Warped};
+
+      \draw[black, ->, thick, yshift=-0.2cm] (0, 0) -- (5, 0);
+      \path[yshift=-0.7cm] (2, 0) node[anchor=north,font=\small\selectfont] {Normalized distance from camera};
+      \foreach \x in {0, 0.25, 0.5, 0.75, 1.0} {
+        \draw[xscale=4,yshift=-0.2cm] (\x cm, 1pt) -- (\x cm, -1pt) node[anchor=north] {$\x$};
+      }
     \end{tikzpicture}
   \end{figure}
 
