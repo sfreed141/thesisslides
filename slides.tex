@@ -979,6 +979,7 @@
 
 \begin{frame}{Vary based on perspective}
   \begin{itemize}
+    \item Perspective: objects further away appear smaller
     \item Use perspective projection to determine voxel size
     \item Makes voxel size based on relative size in screen space
   \end{itemize}
@@ -1149,13 +1150,27 @@
 \end{frame}
 
 \begin{frame}{Rasterized vs. Tessellated Voxels}
-  \begin{block}{Summary}
-    \begin{description}
-      \item[Rasterized:] limited by rasterizer, slightly faster
-      \item[Tessellated:] limited by hardware, easier to implement
-    \end{description}
-  \end{block}
+  \begin{figure}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{rasterlimited}
+      \caption*{Rasterized voxelization limited by fragment resolution}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{tesslimited}
+      \caption*{Tessellated voxelization limited by hardware}
+    \end{subfigure}
+  \end{figure}
 \end{frame}
+
+% \begin{frame}{Rasterized vs. Tessellated Voxels}
+%   \begin{block}{Summary}
+%     \begin{description}
+%       \item[Rasterized:] limited by rasterizer, slightly faster
+%       \item[Tessellated:] limited by hardware, easier to implement
+%     \end{description}
+%   \end{block}
+% \end{frame}
 
 \begin{frame}{Voxel Warping}
   % \begin{figure}
@@ -1345,7 +1360,7 @@
   % wrap up and list contributions again
   \begin{itemize}
     \item Implementation\footnote{Find the source here: \url{github.com/sfreed141/vct}} of real-time global illumination using voxel cone tracing
-    \item Implementation and comparison of two voxelization methods
+    \item Implementation and comparison of voxelization using rasterization and tessellation
     \item Investigation into warped voxels
   \end{itemize}
 \end{frame}
