@@ -73,7 +73,7 @@
 \setbeamertemplate{frametitle continuation}{}
 
 \section{Introduction}
-{\setbeamertemplate{frame footer}{\href{http://on-demand.gputechconf.com/gtc/2012/presentations/SB134-Voxel-Cone-Tracing-Octree-Real-Time-Illumination.pdf}{image from VCT and SVO for Real-time Global Illumination} by Cyril Crassin}
+{\setbeamertemplate{frame footer}{\href{http://on-demand.gputechconf.com/gtc/2012/presentations/SB134-Voxel-Cone-Tracing-Octree-Real-Time-Illumination.pdf}{images from VCT and SVO for Real-time Global Illumination} by Cyril Crassin}
 \begin{frame}{Introduction}
 % who i am, thanks for coming, blah blah
 
@@ -86,11 +86,21 @@
   \end{block}
 
   \begin{figure}
-    \includegraphics[height=0.5\textheight]{indirectlighting}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \includegraphics[width=\textwidth]{directlighting}
+      \caption*{Direct lighting}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \includegraphics[width=\textwidth]{indirectlighting}
+      \caption*{Indirect lighting}
+    \end{subfigure}
   \end{figure}
 \end{frame}}
 
 \begin{frame}{Real-Time Global Illumination}
+  Global illumination algorithms approximate indirect light.
+
   Some existing approaches:
 
   \begin{description}
@@ -99,7 +109,7 @@
     \item[Static] Baked lighting, light probes
     \item[Dynamic] Reflective Shadowmaps, Light Propagation Volumes, Voxel Cone Tracing
   \end{description}
-\end{frame}`'
+\end{frame}
 
 % Want to go from this simple approximation...
 \begin{frame}{Real-Time Global Illumination}
@@ -130,22 +140,26 @@
 \subsection{Motivations}
 \begin{frame}{Motivations}
   \begin{enumerate}
-    % \centering
-    \item Real-time global illumination is difficult % lots of computation, most algorithms require a lot of parts so it's difficult to start from scratch (like most of us)
-      % \begin{itemize}
-      %   \item Approximations need to be as fast and accurate as possible
-      %   \item Many steps and stuff to keep track of
-      % \end{itemize}
+    \item Want to educate
       \begin{itemize}
-        \item Time and memory constraints
-        \item Multiple steps
+        \item Limited reference code
       \end{itemize}
-    \item Limited reference material
-      \begin{itemize}
-        \item Proprietary code
-        \item Demo code
-        \item Engine code
-      \end{itemize}
+    \item Want to make it better
+  %   % \centering
+  %   \item Real-time global illumination is difficult % lots of computation, most algorithms require a lot of parts so it's difficult to start from scratch (like most of us)
+  %     % \begin{itemize}
+  %     %   \item Approximations need to be as fast and accurate as possible
+  %     %   \item Many steps and stuff to keep track of
+  %     % \end{itemize}
+  %     \begin{itemize}
+  %       \item Time and memory constraints
+  %       \item Multiple steps
+  %     \end{itemize}
+  %   \item Limited reference material
+  %     \begin{itemize}
+  %       \item Proprietary code
+  %       \item Engine code
+  %     \end{itemize}
         % \begin{itemize}
         %   \item Not much public code  % solutions developed in the industry or by researchers often aren't open source (e.g. vxgi is binary, code accompanying research papers not there or perhaps integrated into proprietary codebase)
         %   \item Demo or engine code % most is limited in scope or is tied to an engine, making it difficult to extend or integrate into your own project
@@ -159,6 +173,7 @@
 \begin{frame}{Contributions}
   \begin{block}{Implement}
     \begin{itemize}
+      \item Based on voxel cone tracing
       \item Open-source and cross-platform
       \item Not tied to any particular engine
     \end{itemize}
@@ -167,7 +182,7 @@
   \begin{block}{Extend}
     \begin{itemize}
       \item Comparison of two methods of scene voxelization
-      \item Investigation into warped voxels
+      \item Investigation into warped (continuous) voxels
     \end{itemize}
   \end{block}
 
@@ -330,11 +345,19 @@
 %   \end{figure}
 % \end{frame}}
 
-\begin{frame}{Light Theory}
-  % Lighting algorithms are numerical approximations
-  % The direct light is relatively straightforward to compute: for each point we can iterate through all the lights and sum their contributions
-  % Indirect light is the hard part, since the light can come from anywhere in the scene. To figure out all the light in the scene we'd have to test every possible direction in this hemisphere. Therefore we have to resort to approximations...
-  % Often the spots where indirect light comes from like right here on the wall are called virtual point lights. The idea is that they behave like normal light sources but they're virtual because the light is essentially sourced from somewhere else (the primary light sources)
+
+\begin{frame}{How do we render?}
+  \begin{description}
+    \item[Direct Lighting] sum contributions of visible lights
+    \item[Indirect Lighting] approximations (voxel cone tracing)
+  \end{description}
+% \end{frame}
+
+% \begin{frame}{Light Theory}
+%   % Lighting algorithms are numerical approximations
+%   % The direct light is relatively straightforward to compute: for each point we can iterate through all the lights and sum their contributions
+%   % Indirect light is the hard part, since the light can come from anywhere in the scene. To figure out all the light in the scene we'd have to test every possible direction in this hemisphere. Therefore we have to resort to approximations...
+%   % Often the spots where indirect light comes from like right here on the wall are called virtual point lights. The idea is that they behave like normal light sources but they're virtual because the light is essentially sourced from somewhere else (the primary light sources)
 
   \begin{figure}
     \begin{tikzpicture}
@@ -364,7 +387,7 @@
     \end{tikzpicture}
   \end{figure}
 
-  % TODO rendering equation?
+%   % TODO rendering equation?
 \end{frame}
 
 % There are many different ways to achieve global illumination, often with very different goals and tradeoffs. Also, most complete lighting solutions combine multiple independent techniques or only selectively apply them in order to meet quality, time, and memory constraints.
@@ -529,7 +552,7 @@
 %   \end{columns}
 % \end{frame}
 
-\begin{frame}{Overview of Renderer}
+\begin{frame}{Overview of Global Illumination Algorithm}
   \captionsetup[subfigure]{font=footnotesize,labelfont=footnotesize}
   \begin{figure}
     \renewcommand{\thesubfigure}{\arabic{subfigure}}
@@ -661,8 +684,7 @@
 %   \end{figure}
 % \end{frame}
 
-{\setbeamertemplate{frame footer}{left image from \href{http://on-demand.gputechconf.com/gtc/2014/presentations/S4552-rt-voxel-based-global-illumination-gpus.pdf}{Practical Real-time Voxel-based Global Illumination for Current GPUs} by Alexey Panteleev}
-\begin{frame}{Radiance Injection}
+\begin{frame}{Inject Direct Light}
   Use \textbf{shadowmap} to determine where direct light hits voxels
 
   % Only interested in depth values important for us: along with the light matrix we can reconstruct world positions
@@ -681,10 +703,10 @@
       \adjincludegraphics[width=0.8\textwidth,trim={{0.1\width} 0 {0.1\width} 0},clip]{shadowmap}
     % \end{subfigure}
   \end{figure}
-\end{frame}}
+\end{frame}
 
 {\setbeamertemplate{frame footer}{left image from \href{http://on-demand.gputechconf.com/gtc/2014/presentations/S4552-rt-voxel-based-global-illumination-gpus.pdf}{Practical Real-time Voxel-based Global Illumination for Current GPUs} by Alexey Panteleev}
-\begin{frame}{Radiance Injection}
+\begin{frame}{Inject Direct Light}
   Use \textbf{shadowmap} to determine where direct light hits voxels
 
   \begin{figure}
@@ -725,7 +747,7 @@
 
 % the cracks are the result of imperfect voxelization (conservative rasterization)
 % also this is only showing the surface values, the empty space also contains semi-opaque colors
-\begin{frame}{Radiance Filtering}
+\begin{frame}{Filter the lit voxels}
   % \begin{figure}
   %   \includegraphics<+>[width=\textwidth]{mipmap0.png}
   %   \includegraphics<+>[width=\textwidth]{mipmap1.png}
@@ -1336,9 +1358,9 @@
   \begin{itemize}
     \item Try to alleviate flickering with warped voxels % temporal, hole filling, voxel interpolation, snapping % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
     \item Filter using LPV method % can't really do this right now since there are too many differences between engines to make a fair comparison. also what assets do they use and what other techniques?
-    \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
+    \item Sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
     % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
-    \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality, other miscellaneous optimizations % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
+    \item Adaptive cone tracing quality % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
   \end{itemize}
 \end{frame}
 
