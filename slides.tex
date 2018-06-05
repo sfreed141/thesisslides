@@ -985,7 +985,7 @@
   \end{itemize}
 
   \begin{figure}
-    \begin{tikzpicture}[scale=0.9]
+    \begin{tikzpicture}[scale=0.8]
       \foreach \angle in {30, 22.5, 15, 7.5, 0, -7.5, -15, -22.5, -30} {
         \draw (0, 0) -- (5, {5 * tan(\angle)});
       }
@@ -1356,6 +1356,19 @@
 % TODO related works summary slide? pros/cons on each related work slide?
 
 \subsection{Conclusion}
+\begin{frame}{Future Work}
+  % other ways of adjusting resolution are more feasible due to temporal artifacts
+
+  % Follow ups for voxelization and voxel warping, then general improvements
+
+  \begin{itemize}
+    \item Try to alleviate flickering with warped voxels
+    \item Filter using LPV method
+    \item Sparse 3D textures for the voxel grid
+    \item Adaptive cone tracing quality
+  \end{itemize}
+\end{frame}
+
 \begin{frame}{Conclusion}
   % wrap up and list contributions again
   \begin{itemize}
@@ -1365,19 +1378,6 @@
   \end{itemize}
 \end{frame}
 
-\begin{frame}{Future Work}
-  % other ways of adjusting resolution are more feasible due to temporal artifacts
-
-  % Follow ups for voxelization and voxel warping, then general improvements
-
-  \begin{itemize}
-    \item Try to alleviate flickering with warped voxels % temporal, hole filling, voxel interpolation, snapping % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
-    \item Filter using LPV method % can't really do this right now since there are too many differences between engines to make a fair comparison. also what assets do they use and what other techniques?
-    \item Sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
-    % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
-    \item Adaptive cone tracing quality % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
-  \end{itemize}
-\end{frame}
 
 \begin{frame}[standout]
   \LARGE Thank you!\\
