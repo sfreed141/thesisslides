@@ -73,6 +73,7 @@
 \setbeamertemplate{frametitle continuation}{}
 
 \section{Introduction}
+{\setbeamertemplate{frame footer}{\href{http://on-demand.gputechconf.com/gtc/2012/presentations/SB134-Voxel-Cone-Tracing-Octree-Real-Time-Illumination.pdf}{image from VCT and SVO for Real-time Global Illumination} by Cyril Crassin}
 \begin{frame}{Introduction}
 % who i am, thanks for coming, blah blah
 
@@ -81,24 +82,39 @@
   \begin{block}{Computer Graphics}
     How can we simulate light in a virtual world?
 
-    Physically accurate lighting is too complex for real-time---approximate!
+    Physically accurate indirect lighting is too complex for real-time---approximate!
   \end{block}
-\end{frame}
+
+  \begin{figure}
+    \includegraphics[height=0.5\textheight]{indirectlighting}
+  \end{figure}
+\end{frame}}
+
+\begin{frame}{Real-Time Global Illumination}
+  Some existing approaches:
+
+  \begin{description}
+    \item[Constant] Flat ambient % as seen in first image
+    \item[Partial] Ambient occlusion, screen-space approaches % only model parts of global illumination; often local methods that do not have complete scene information
+    \item[Static] Baked lighting, light probes
+    \item[Dynamic] Reflective Shadowmaps, Light Propagation Volumes, Voxel Cone Tracing
+  \end{description}
+\end{frame}`'
 
 % Want to go from this simple approximation...
-\begin{frame}{Motivations}
+\begin{frame}{Real-Time Global Illumination}
   \begin{figure}
     \includegraphics[width=\textwidth]{gi_off.png}
-    \caption*{:(}
+    \caption*{Flat ambient approximation}
   \end{figure}
 \end{frame}
 
 % to something like _this_, with goodies like glossy reflection, color bleeding, and ambient occlusion
 % These effects are from approximating the indirect light in the scene: the light that doesn't come directly from a light source.
-\begin{frame}{Motivations}
+\begin{frame}{Real-Time Global Illumination}
   \begin{figure}
     \includegraphics[width=\textwidth]{gi_on.png}
-    \caption*{:)}
+    \caption*{Full global illumination}
   \end{figure}
 \end{frame}
 
@@ -120,7 +136,16 @@
       %   \item Approximations need to be as fast and accurate as possible
       %   \item Many steps and stuff to keep track of
       % \end{itemize}
+      \begin{itemize}
+        \item Time and memory constraints
+        \item Multiple steps
+      \end{itemize}
     \item Limited reference material
+      \begin{itemize}
+        \item Proprietary code
+        \item Demo code
+        \item Engine code
+      \end{itemize}
         % \begin{itemize}
         %   \item Not much public code  % solutions developed in the industry or by researchers often aren't open source (e.g. vxgi is binary, code accompanying research papers not there or perhaps integrated into proprietary codebase)
         %   \item Demo or engine code % most is limited in scope or is tied to an engine, making it difficult to extend or integrate into your own project
@@ -132,11 +157,25 @@
 
 \subsection{Contributions}
 \begin{frame}{Contributions}
-  \begin{itemize}
-    \item Open-source, cross-platform implementation of real-time global illumination % except for apple since they don't like opengl. the big goal here is for others to be able to work on it and do cool stuff (jaafer already used the vct part :) ). voxel cone tracing is the general technique used to achieve gi
-    \item Comparison of two different methods of scene voxelization % voxelization is an important part of many new gi algorithms so we wanted to compare two different methods
-    \item Investigation into warped (nonuniform size) voxels % more on this later, first I'd like to give a crash course in graphics and an overview of other solutions to real time gi
-  \end{itemize}
+  \begin{block}{Implement}
+    \begin{itemize}
+      \item Open-source and cross-platform
+      \item Not tied to any particular engine
+    \end{itemize}
+  \end{block}
+
+  \begin{block}{Extend}
+    \begin{itemize}
+      \item Comparison of two methods of scene voxelization
+      \item Investigation into warped voxels
+    \end{itemize}
+  \end{block}
+
+  % \begin{itemize}
+  %   \item Open-source implementation of real-time global illumination % except for apple since they don't like opengl. the big goal here is for others to be able to work on it and do cool stuff (jaafer already used the vct part :) ). voxel cone tracing is the general technique used to achieve gi
+  %   \item Comparison of two different methods of scene voxelization % voxelization is an important part of many new gi algorithms so we wanted to compare two different methods
+  %   \item Investigation into warped (nonuniform size) voxels % more on this later, first I'd like to give a crash course in graphics and an overview of other solutions to real time gi
+  % \end{itemize}
 \end{frame}
 
 \section{Background}
@@ -282,14 +321,14 @@
 % \end{frame}
 
 \subsection{Lighting}
-{\setbeamertemplate{frame footer}{\href{http://on-demand.gputechconf.com/gtc/2012/presentations/SB134-Voxel-Cone-Tracing-Octree-Real-Time-Illumination.pdf}{image from VCT and SVO for Real-time Global Illumination} by Cyril Crassin}
-\begin{frame}{How do we render?}
-  % We need a shading model: a way to compute a color from the geometry, lights, and materials we have in the scene for a particular point
-  % Makes sense to model this based on the real-world sooo
-  \begin{figure}
-    \includegraphics[height=0.9\textheight]{indirectlighting}
-  \end{figure}
-\end{frame}}
+% {\setbeamertemplate{frame footer}{\href{http://on-demand.gputechconf.com/gtc/2012/presentations/SB134-Voxel-Cone-Tracing-Octree-Real-Time-Illumination.pdf}{image from VCT and SVO for Real-time Global Illumination} by Cyril Crassin}
+% \begin{frame}{How do we render?}
+%   % We need a shading model: a way to compute a color from the geometry, lights, and materials we have in the scene for a particular point
+%   % Makes sense to model this based on the real-world sooo
+%   \begin{figure}
+%     \includegraphics[height=0.9\textheight]{indirectlighting}
+%   \end{figure}
+% \end{frame}}
 
 \begin{frame}{Light Theory}
   % Lighting algorithms are numerical approximations
@@ -333,16 +372,16 @@
 % Next we have 'partial' global illumination approaches. While better, these methods don't attempt to fully simulate indirect lighting---they're hacks.
 % Static methods involve precomputing lighting prior to runtime. The lighting quality itself is often very accurate, but it doesn't handle dynamic, moving objects.
 % Lastly, we have the dynamic approaches. The entire algorithm is designed to fit inside a single frame so all dynamic objects have their light updated (of course there are tricks and speed this up). This is what we are interested in.
-\begin{frame}{Real-Time Global Illumination}
-  Various approaches to approximating indirect light.
+% \begin{frame}{Real-Time Global Illumination}
+%   Various approaches to approximating indirect light.
 
-  \begin{description}
-    \item[Constant] Fixed fraction of ambient light % as seen in first image
-    \item[Partial] Ambient occlusion, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
-    \item[Static] Baked lighting, light probes
-    \item[Dynamic] Reflective Shadowmaps, Light Propagation Volumes, Voxel Cone Tracing
-  \end{description}
-\end{frame}
+%   \begin{description}
+%     \item[Constant] Fixed fraction of ambient light % as seen in first image
+%     \item[Partial] Ambient occlusion, screen space reflections % only model parts of global illumination; often local methods that do not have complete scene information
+%     \item[Static] Baked lighting, light probes
+%     \item[Dynamic] Reflective Shadowmaps, Light Propagation Volumes, Voxel Cone Tracing
+%   \end{description}
+% \end{frame}
 
 % Most algorithms end up having the same main steps. The differences generally come from what the representation is (volumetric? screen space? is it complete or just local?) and how it's stored (if any special data structure is used). When doing the final gathering of the light there's often a clever way to sample the lighting to reduce computations.
 \begin{frame}{Real-Time Global Illumination}
@@ -532,8 +571,9 @@
 {\setbeamertemplate{frame footer}{image from \href{https://www.khronos.org/opengl/wiki/Tessellation}{OpenGL Wiki}}
 \begin{frame}{Voxelization with Tessellator}
   \begin{itemize}
-    \item Each vertex corresponds to a voxel
     \item Triangles are subdivided into multiple vertices during tessellation
+    % TODO tessellation levels?
+    \item Tessellation level determines how much to subdivide
   \end{itemize}
 
   % Tessellation after vertex shading and before fragment shading
@@ -546,15 +586,16 @@
   \end{figure}
 \end{frame}}
 
-\begin{frame}{Determining Tessellation Levels}
+\begin{frame}{Voxelization with Tessellator}
   \begin{itemize}
+    \item Each vertex corresponds to a voxel
     \item Outer levels determined from respective edge lengths
     \item Inner level determined from maximum triangle altitude length
   \end{itemize}
 
   % Here is an illustration of the idea behind tessellated voxelization. By subdividing the edges and inside appropriately we can get a fairly good voxelization. A nice part of this voxelization is we don't need to worry about the dominant axis or conservative rasterization.
   \begin{figure}
-    \begin{tikzpicture}[scale=0.8]
+    \begin{tikzpicture}[scale=0.7]
       \draw [gray, step=1.0] (-4, -4) grid ++(8, 8);
       \foreach \x/\y in {-3.1/-0.2, -2.23/-0.7, -1.37/-1.2, -0.5/-1.7, 0.25/-0.65, 1.0/0.4, 1.75/1.45, 2.5/2.5, 1.57/2.05, 0.63/1.6, -0.3/1.15, -1.23/0.7, -2.17/0.25, -1.31/-0.28, -0.19/0.26, -0.69/-0.58}{
         \fill[thick, black] (\x, \y) circle (0.1cm);
@@ -658,29 +699,29 @@
 \end{frame}}
 
 % Now that we have a high resolution version of the light in the scene we want to smooth it out. This step is for mimicing how light should spread out and bounce around. The number of levels (the mipmaps) of filtered light is a configurable parameter and each level is half the size of the previous. To compute the next level we just average neighboring voxels.
-\begin{frame}{Radiance Filtering}
-  \begin{itemize}
-    \item Multiple \textbf{levels} (mipmaps)
-    \item Each level is half the size of the previous
-    \item Computing the next level is a 2x2x2 average
-  \end{itemize}
+% \begin{frame}{Radiance Filtering}
+%   \begin{itemize}
+%     \item Multiple \textbf{levels} (mipmaps)
+%     \item Each level is half the size of the previous
+%     \item Computing the next level is a 2x2x2 average
+%   \end{itemize}
 
-  \begin{center}
-    \definecolor{purple}{rgb}{1.0, 0.0, 1.0}
-    \begin{tikzpicture}
-      \fill[red] (0, 0) rectangle (1, 1);
-      \fill[red] (1, 1) rectangle (2, 2);
-      \fill[blue] (1, 0) rectangle (2, 1);
-      \fill[blue] (0, 1) rectangle (1, 2);
-      \fill[{purple}] (5, 0) rectangle (7, 2);
+%   \begin{center}
+%     \definecolor{purple}{rgb}{1.0, 0.0, 1.0}
+%     \begin{tikzpicture}
+%       \fill[red] (0, 0) rectangle (1, 1);
+%       \fill[red] (1, 1) rectangle (2, 2);
+%       \fill[blue] (1, 0) rectangle (2, 1);
+%       \fill[blue] (0, 1) rectangle (1, 2);
+%       \fill[{purple}] (5, 0) rectangle (7, 2);
 
-      \draw[step=1.0, gray] (0, 0) grid (4, 4);
-      \draw[step=2.0, black, ultra thick] (0, 0) grid (4, 4);
-      \draw[black, ->, ultra thick] (4.25, 2) to (4.75, 2);
-      \draw[step=2.0, black, ultra thick, xshift=5.0cm] (0, 0) grid (4, 4);
-    \end{tikzpicture}
-  \end{center}
-\end{frame}
+%       \draw[step=1.0, gray] (0, 0) grid (4, 4);
+%       \draw[step=2.0, black, ultra thick] (0, 0) grid (4, 4);
+%       \draw[black, ->, ultra thick] (4.25, 2) to (4.75, 2);
+%       \draw[step=2.0, black, ultra thick, xshift=5.0cm] (0, 0) grid (4, 4);
+%     \end{tikzpicture}
+%   \end{center}
+% \end{frame}
 
 % the cracks are the result of imperfect voxelization (conservative rasterization)
 % also this is only showing the surface values, the empty space also contains semi-opaque colors
@@ -912,24 +953,7 @@
 
 \end{frame}
 
-\begin{frame}{Vary with distance from camera}
-  % \begin{figure}
-  %   \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
-  %   \includegraphics<2>[width=\textwidth]{rastervoxel_warp}
-  %   \caption*{\only<1>{Without warping}\only<2>{With warping}}
-  % \end{figure}
-  \begin{figure}
-    \begin{subfigure}[t]{0.475\textwidth}
-      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{rastervoxel_nowarp}
-      \caption*{Without warping}
-    \end{subfigure}
-    ~
-    \begin{subfigure}[t]{0.475\textwidth}
-      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{rastervoxel_warp}
-      \caption*{With warping}
-    \end{subfigure}
-  \end{figure}
-\end{frame}
+
 
 \begin{frame}{Vary based on perspective}
   \begin{itemize}
@@ -954,24 +978,7 @@
   \end{figure}
 \end{frame}
 
-\begin{frame}{Vary based on perspective}
-  % \begin{figure}
-  %   \includegraphics<1>[width=\textwidth]{tessvoxels_nowarp}
-  %   \includegraphics<2>[width=\textwidth]{tessvoxels_warp}
-  %   \caption*{\only<1>{Without warping}\only<2>{With warping}}
-  % \end{figure}
-  \begin{figure}
-    \begin{subfigure}[t]{0.475\textwidth}
-      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{tessvoxels_nowarp}
-      \caption*{Without warping}
-    \end{subfigure}
-    ~
-    \begin{subfigure}[t]{0.475\textwidth}
-      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{tessvoxels_warp}
-      \caption*{With warping}
-    \end{subfigure}
-  \end{figure}
-\end{frame}
+
 
 \section{Results and Conclusions}
 
@@ -1128,6 +1135,25 @@
   \end{block}
 \end{frame}
 
+\begin{frame}{Voxel Warping}
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{rastervoxel_nowarp}
+  %   \includegraphics<2>[width=\textwidth]{rastervoxel_warp}
+  %   \caption*{\only<1>{Without warping}\only<2>{With warping}}
+  % \end{figure}
+  \begin{figure}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{rastervoxel_nowarp}
+      \caption*{Without warping}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{rastervoxel_warp}
+      \caption*{With warping}
+    \end{subfigure}
+  \end{figure}
+\end{frame}
+
 % Lastly we evaluated our voxel warping...
 \begin{frame}{Voxel Warping}
   % \begin{figure}
@@ -1147,6 +1173,25 @@
     \begin{subfigure}[t]{0.475\textwidth}
       \adjincludegraphics[width=\textwidth,trim={{0.25\width} 0 0 0},clip]{voxelwarp_on}
       \caption*{With voxel warping}
+    \end{subfigure}
+  \end{figure}
+\end{frame}
+
+\begin{frame}{Perspective Voxel Warping}
+  % \begin{figure}
+  %   \includegraphics<1>[width=\textwidth]{tessvoxels_nowarp}
+  %   \includegraphics<2>[width=\textwidth]{tessvoxels_warp}
+  %   \caption*{\only<1>{Without warping}\only<2>{With warping}}
+  % \end{figure}
+  \begin{figure}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{tessvoxels_nowarp}
+      \caption*{Without warping}
+    \end{subfigure}
+    ~
+    \begin{subfigure}[t]{0.475\textwidth}
+      \adjincludegraphics[width=\textwidth,trim={0 0 {0.25\width} 0},clip]{tessvoxels_warp}
+      \caption*{With warping}
     \end{subfigure}
   \end{figure}
 \end{frame}
@@ -1195,33 +1240,45 @@
   \end{enumerate}
 \end{frame}
 
-% {\setbeamertemplate{frame footer}{image from \href{https://dl.acm.org/citation.cfm?id=1053460}{Reflective shadow maps} by C.\ Dachsbacher and M.\ Stamminger}
-% \begin{frame}{Related Work---Reflective Shadowmaps}
-%   \begin{enumerate}
-%     \item Scene representation? \alert{Reflective shadowmap (RSM)}% reused from shadowmap
-%     \item Light computation? \alert{None, use color and normal from RSM}% normal and color stored along with shadowmap
-%     \item Light sampling? \alert{Sample nearby points in RSM} % project point into the RSM and sample nearby points
-%   \end{enumerate}
+{\setbeamertemplate{frame footer}{image from \href{https://dl.acm.org/citation.cfm?id=1053460}{Reflective shadow maps} by C.\ Dachsbacher and M.\ Stamminger}
+\begin{frame}{Related Work---Reflective Shadowmaps}
+  \begin{enumerate}
+    \item Scene representation? \alert{Reflective shadowmap (RSM)}% reused from shadowmap
+    \item Light computation? \alert{None, use color and normal from RSM}% normal and color stored along with shadowmap
+    \item Light sampling? \alert{Sample nearby points in RSM} % project point into the RSM and sample nearby points
+  \end{enumerate}
 
-%   \begin{figure}
-%     \includegraphics[width=\textwidth]{rsm}
-%   \end{figure}
+  \begin{figure}
+    \includegraphics[width=\textwidth]{rsm}
+    \caption*{Reflective shadow map (depth, world position, normal, color) and result}
+  \end{figure}
 
-%   % pros straighforward, doesn't require any fancy data structures
-%   % cons no occlusion information and complexity linear wrt number of lights, no specular
-% \end{frame}}
+  % pros straighforward, doesn't require any fancy data structures
+  % cons no occlusion information and complexity linear wrt number of lights, no specular
+\end{frame}}
 
 {\setbeamertemplate{frame footer}{image from \href{http://www.crytek.com/download/Light_Propagation_Volumes.pdf}{Light Propagation Volumes in CryEngine 3} by A.\ Kaplanyan}
 \begin{frame}{Related Work---Light Propagation Volumes}
   \begin{enumerate}
-    \item Scene representation? \alert{Voxel grid (incomplete)}% low resolution voxel grid (originally this wasn't a complete voxelization---it was constructed from other info like shadowmap and depth information), stored in (cascaded) 3d texture
+    \item Scene representation? \alert{Cascaded voxel grid (incomplete)}% low resolution voxel grid (originally this wasn't a complete voxelization---it was constructed from other info like shadowmap and depth information), stored in (cascaded) 3d texture
     \item Light computation? \alert{Iterative propagation} % light is iteratively propagated/filtered to neighboring voxels until the information is stable
     \item Light sampling? \alert{Texture lookup} % simple lookup into voxel texture
   \end{enumerate}
 
   \begin{figure}
     \centering
-    \includegraphics[height=0.5\textheight]{lpvpropagation}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \begin{tikzpicture}[scale=0.6]
+        \draw [black, step=1.0] (-4, -4) grid ++(8, 8);
+        \draw [black, step=0.5] (-2, -2) grid ++(4, 4);
+        \draw [black, step=0.25] (-1, -1) grid ++(2, 2);
+      \end{tikzpicture}
+      \caption*{Cascaded voxel grid}
+    \end{subfigure}
+    \begin{subfigure}[t]{0.475\textwidth}
+      \includegraphics[height=0.5\textheight]{lpvpropagation}
+      \caption*{Light propagation}
+    \end{subfigure}
   \end{figure}
 
 
@@ -1278,7 +1335,7 @@
 
   \begin{itemize}
     \item Try to alleviate flickering with warped voxels % temporal, hole filling, voxel interpolation, snapping % not restricted by rasterizer so we can put vertices where we want % voxels corresponding to view frustum still interesting idea, finding a way to reduce flickering would be great
-    \item Fully implement LPVs and VCT (as described in research paper) for direct comparison % can't really do this right now since there are too many differences between engines to make a fair comparison. also what assets do they use and what other techniques?
+    \item Filter using LPV method % can't really do this right now since there are too many differences between engines to make a fair comparison. also what assets do they use and what other techniques?
     \item Cascaded sparse 3D textures % uniform voxels (clearly) easier to work with. sparse textures might help alleviate memory consumption issues without having to resort to an octree
     % \item Solid voxelization % as opposed to surface voxelization like now. rasterization vs tessellation doesn't matter much (even with optimizations most likely)
     \item Spherical harmonics, anisotropic filtering, adaptive cone tracing quality, other miscellaneous optimizations % staggered updating of filtered radiance, voxelizing with lower level of detail mesh, cone trace at lower resolution and interpolate
